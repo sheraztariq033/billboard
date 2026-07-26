@@ -67,6 +67,28 @@ function getFallbackResponse<T>(path: string, method: string, body: any): T {
     return { status: 'online', service: 'OMNI-GRID PAKISTAN Edge Engine' } as any;
   }
 
+  if (path.includes('/pricing/calculate')) {
+    const base = Number(body?.baseDailyRatePkr || 35000);
+    const occ = Number(body?.occupancyRatePct || 85);
+    const ramadan = Boolean(body?.isRamadanSeason || true);
+    let mult = 1.0;
+    if (occ > 80) mult += 0.20;
+    if (ramadan) mult += 0.15;
+    const dynamicRate = Math.round(base * mult);
+
+    return {
+      baseDailyRatePkr: base,
+      occupancyRatePct: occ,
+      isRamadanSeason: ramadan,
+      surgeMultiplier: mult,
+      dynamicDailyRatePkr: dynamicRate,
+      appliedRules: [
+        occ > 80 ? 'Demand Surge: High Occupancy >80% (+20%)' : 'Standard Demand',
+        ramadan ? 'Seasonal Premium: Ramadan Peak (+15%)' : 'Standard Season',
+      ],
+    } as any;
+  }
+
   if (path.includes('/commission/calculate')) {
     const gross = Number(body?.grossBookingPkr || 1000000);
     const agentPct = Number(body?.agentCommissionPct || 2.5);
