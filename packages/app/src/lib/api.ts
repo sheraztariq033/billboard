@@ -67,6 +67,41 @@ function getFallbackResponse<T>(path: string, method: string, body: any): T {
     return { status: 'online', service: 'OMNI-GRID PAKISTAN Edge Engine' } as any;
   }
 
+  if (path.includes('/search/semantic')) {
+    return {
+      query: body?.query || 'high impact DOOH near Gulberg Lahore',
+      timestamp: new Date().toISOString(),
+      vectorIndex: 'omni-grid-vectorize-index',
+      resultsCount: 3,
+      matches: [
+        {
+          id: 'lhr_1',
+          title: 'Main Boulevard Gulberg Digital SMD',
+          city: 'Lahore',
+          area: 'Gulberg III',
+          similarityScore: 0.948,
+          matchReason: 'Direct semantic match for Gulberg DOOH screen with 1.2M daily impressions',
+        },
+        {
+          id: 'khi_1',
+          title: 'Clifton Block 2 Flyover Dual Facing SMD',
+          city: 'Karachi',
+          area: 'Clifton',
+          similarityScore: 0.882,
+          matchReason: 'High impact DOOH screen matching high-income commercial demographics',
+        },
+        {
+          id: 'isb_1',
+          title: 'Blue Area Jinnah Avenue Unipole',
+          city: 'Islamabad',
+          area: 'Blue Area',
+          similarityScore: 0.814,
+          matchReason: 'Prime commercial location matching brand visibility intent',
+        },
+      ],
+    } as any;
+  }
+
   if (path.includes('/vision/analyze')) {
     return {
       assetId: body?.assetId || 'lhr_1',
