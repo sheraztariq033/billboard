@@ -1,10 +1,15 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
 
-// Users Table
+// Users Table (Better-Auth + OMNI-GRID Multi-Role Attributes)
 export const users = sqliteTable('user', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   email: text('email').notNull().unique(),
+  phone: text('phone'),
+  role: text('role').notNull().default('advertiser'), // 'advertiser' | 'vendor' | 'shopkeeper' | 'creator' | 'rider' | 'admin'
+  city: text('city'),
+  easypaisaNumber: text('easypaisaNumber'),
+  jazzcashNumber: text('jazzcashNumber'),
   emailVerified: integer('emailVerified', { mode: 'boolean' }).notNull().default(false),
   image: text('image'),
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
@@ -103,8 +108,100 @@ export const auditLogs = sqliteTable('audit_log', {
   id: text('id').primaryKey(),
   organizationId: text('organizationId').references(() => organizations.id, { onDelete: 'set null' }),
   userId: text('userId').references(() => users.id, { onDelete: 'set null' }),
-  action: text('action').notNull(), // e.g. "user.login", "subscription.updated", "file.uploaded"
+  action: text('action').notNull(),
   ipAddress: text('ipAddress'),
-  details: text('details'), // JSON payload
+  details: text('details'),
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
+});
+
+// ============================================================================
+// OMNI-GRID PAKISTAN DOMAIN TABLES
+// ============================================================================
+
+// 1. Omnichannel Ad Assets Table (Billboards, Shelves, Kiosks, Transit, TV)
+export const adAssets = sqliteTable('ad_asset', {
+  id: text('id').primaryKey(),
+  ownerId: text('ownerId').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  category: text('category').notNull(), // 'OOH' | 'DOOH' | 'RETAIL_SHELF' | 'CIVIC_KIOSK' | 'CAMPUS' | 'TRANSIT' | 'HORECA' | 'CREATOR' | 'TV'
+  locationCity: text('locationCity').notNull(),
+  locationArea: text('locationArea').notNull(),
+  latitude: real('latitude'),
+  longitude: real('longitude'),
+  dailyRatePkr: integer('dailyRatePkr').notNull(),
+  monthlyRatePkr: integer('monthlyRatePkr').notNull(),
+  dimensions: text('dimensions'), // e.g., '60x20 ft' or 'Shelf 3x1 ft'
+  estimatedDailyImpressions: integer('estimatedDailyImpressions').default(0),
+  softExpiryDate: text('softExpiryDate'), // e.g. 'Late August 2026'
+  imageUrl: text('imageUrl'),
+  status: text('status').notNull().default('AVAILABLE'), // 'AVAILABLE' | 'OCCUPIED' | 'MAINTENANCE'
+  createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull(),
+});
+
+// 2. Creator Profiles Table (Organic Social Influencer Rates & Metrics)
+export const creatorProfiles = sqliteTable('creator_profile', {
+  id: text('id').primaryKey(),
+  userId: text('userId').notNull().unique().references(() => users.id, { onDelete: 'cascade' }),
+  platform: text('platform').notNull(), // 'INSTAGRAM' | 'TIKTOK' | 'YOUTUBE'
+  handle: text('handle').notNull(),
+  followerCount: integer('followerCount').notNull(),
+  avgViews: integer('avgViews').notNull(),
+  engagementRatePct: real('engagementRatePct').notNull(),
+  calculatedRatePerPostPkr: integer('calculatedRatePerPostPkr').notNull(),
+  niche: text('niche').notNull(), // 'FOOD' | 'FASHION' | 'TECH' | 'LIFESTYLE'
+  createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
+});
+
+// 3. Campaigns Table (Advertiser Omnichannel Campaigns)
+export const campaigns = sqliteTable('campaign', {
+  id: text('id').primaryKey(),
+  advertiserId: text('advertiserId').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  totalBudgetPkr: integer('totalBudgetPkr').notNull(),
+  startDate: integer('startDate', { mode: 'timestamp' }).notNull(),
+  endDate: integer('endDate', { mode: 'timestamp' }).notNull(),
+  targetCity: text('targetCity').notNull(),
+  status: text('status').notNull().default('DRAFT'), // 'DRAFT' | 'ACTIVE' | 'COMPLETED'
+  createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull(),
+});
+
+// 4. Campaign Allocations Table (AI Budget Packaging Split)
+export const campaignAllocations = sqliteTable('campaign_allocation', {
+  id: text('id').primaryKey(),
+  campaignId: text('campaignId').notNull().references(() => campaigns.id, { onDelete: 'cascade' }),
+  assetId: text('assetId').notNull().references(() => adAssets.id, { onDelete: 'cascade' }),
+  allocatedBudgetPkr: integer('allocatedBudgetPkr').notNull(),
+  status: text('status').notNull().default('PENDING'), // 'PENDING' | 'CONFIRMED' | 'LIVE' | 'VERIFIED'
+  notes: text('notes'),
+  createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
+});
+
+// 5. Proof of Performance & Verification Table
+export const proofOfPerformance = sqliteTable('proof_of_performance', {
+  id: text('id').primaryKey(),
+  allocationId: text('allocationId').notNull().references(() => campaignAllocations.id, { onDelete: 'cascade' }),
+  submittedByUserId: text('submittedByUserId').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  photoUrl: text('photoUrl').notNull(),
+  latitude: real('latitude').notNull(),
+  longitude: real('longitude').notNull(),
+  timestamp: integer('timestamp', { mode: 'timestamp' }).notNull(),
+  verifiedStatus: text('verifiedStatus').notNull().default('PENDING'), // 'PENDING' | 'APPROVED' | 'REJECTED'
+  payoutStatus: text('payoutStatus').notNull().default('HELD_IN_ESCROW'), // 'HELD_IN_ESCROW' | 'RELEASED'
+  createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
+});
+
+// 6. Escrow Transactions Table (Mobile Wallet & Bank Payout Tracker)
+export const escrowTransactions = sqliteTable('escrow_transaction', {
+  id: text('id').primaryKey(),
+  campaignId: text('campaignId').notNull().references(() => campaigns.id, { onDelete: 'cascade' }),
+  payeeUserId: text('payeeUserId').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  amountPkr: integer('amountPkr').notNull(),
+  easypaisaNumber: text('easypaisaNumber'),
+  jazzcashNumber: text('jazzcashNumber'),
+  bankDetails: text('bankDetails'),
+  status: text('status').notNull().default('HELD'), // 'HELD' | 'RELEASED' | 'REFUNDED'
+  createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull(),
 });

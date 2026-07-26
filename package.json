@@ -5,12 +5,17 @@
     "packages/*"
   ],
   "scripts": {
+    "dev": "concurrently -n api,app -c blue,green \"npm run dev:api\" \"npm run dev:app\"",
+    "dev:app": "npm --prefix packages/app run dev",
+    "dev:api": "npm --prefix packages/template-core run dev",
     "dev:template": "npm --prefix packages/template-core run dev",
     "dev:docs": "npm --prefix packages/docs-site run dev",
-    "build": "npm --prefix packages/cli run build && npm --prefix packages/template-core run build && npm --prefix packages/client run build",
-    "test": "npm --prefix packages/template-core run test && npm --prefix packages/client run test"
+    "build:app": "npm --prefix packages/app run build",
+    "build": "npm --prefix packages/cli run build && npm --prefix packages/template-core run build && npm --prefix packages/app run build",
+    "test": "npm --prefix packages/template-core run test"
   },
   "devDependencies": {
+    "concurrently": "^10.0.4",
     "typescript": "^5.4.0"
   }
 }
