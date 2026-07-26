@@ -1,4 +1,4 @@
-name = "sparrowbase-backend"
+name = "omni-grid-backend"
 main = "src/index.ts"
 compatibility_date = "2024-04-05"
 compatibility_flags = ["nodejs_compat"]
@@ -6,22 +6,17 @@ compatibility_flags = ["nodejs_compat"]
 # Enable Cloudflare Default Temporary Domain (*.workers.dev)
 workers_dev = true
 
-# Optional Custom Domain Configuration (Uncomment when custom domain is connected)
-# routes = [
-#   { pattern = "api.sparrowbase.dev", custom_domain = true }
-# ]
-
 # D1 Database Binding
 [[d1_databases]]
 binding = "DB"
-database_name = "sparrowbase-db"
+database_name = "omni-grid-db"
 database_id = "1fa1f146-d683-4a10-bb37-a3d46408f038"
 migrations_dir = "drizzle"
 
 # R2 Object Storage Bucket Binding
 [[r2_buckets]]
 binding = "UPLOADS_BUCKET"
-bucket_name = "sparrowbase-uploads"
+bucket_name = "omni-grid-uploads"
 
 # KV Throttling & Session Cache
 [[kv_namespaces]]
@@ -30,18 +25,6 @@ id = "919864ee2a794a95a9ee46c18e8bac89"
 
 # ── Environment Variables ──
 [vars]
-ENVIRONMENT = "development"
+ENVIRONMENT = "production"
 BETTER_AUTH_URL = "http://localhost:8787"
-# Comma-separated list of allowed origins for CORS (set in production)
-# ALLOWED_ORIGINS = "https://sparrowbase.dev,https://app.sparrowbase.dev"
-
-# ── Secrets (set via `npx wrangler secret put <NAME>`) ──
-# These are NOT stored in this file — they are encrypted at rest in Cloudflare.
-#
-# REQUIRED:
-#   npx wrangler secret put BETTER_AUTH_SECRET    # Session signing key (min 32 chars)
-#
-# OPTIONAL (for email, payments):
-#   npx wrangler secret put RESEND_API_KEY        # Resend.com API key for transactional emails
-#   npx wrangler secret put STRIPE_SECRET_KEY     # Stripe secret key (sk_live_...)
-#   npx wrangler secret put STRIPE_WEBHOOK_SECRET # Stripe webhook signing secret (whsec_...)
+BETTER_AUTH_SECRET = "omni_grid_production_super_secret_session_key_2026_pk"
