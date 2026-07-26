@@ -12,7 +12,7 @@ const DEMO_ACCOUNTS: { role: UserRole; email: string; pass: string; label: strin
 ];
 
 export const LoginPage: React.FC = () => {
-  const { login, signup } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
@@ -41,21 +41,14 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleDemoLogin = async (demoEmail: string, demoPass: string, demoRole: UserRole, demoName: string) => {
+  const handleDemoLogin = async (demoEmail: string, demoPass: string, demoRole: UserRole) => {
     setError('');
     setIsSubmitting(true);
     try {
-      // Try logging in first
-      await login(demoEmail, demoPass);
+      await login(demoEmail, demoPass, demoRole);
       navigate('/', { replace: true });
-    } catch (err) {
-      // If demo user doesn't exist yet, auto-register them!
-      try {
-        await signup(demoName, demoEmail, demoPass, demoRole);
-        navigate('/', { replace: true });
-      } catch (signupErr: any) {
-        setError(signupErr.message || 'Demo login failed');
-      }
+    } catch (err: any) {
+      setError(err.message || 'Demo login failed');
     } finally {
       setIsSubmitting(false);
     }
@@ -84,7 +77,7 @@ export const LoginPage: React.FC = () => {
               <button
                 key={acc.role}
                 type="button"
-                onClick={() => handleDemoLogin(acc.email, acc.pass, acc.role, acc.label)}
+                onClick={() => handleDemoLogin(acc.email, acc.pass, acc.role)}
                 disabled={isSubmitting}
                 className="p-2.5 rounded-xl bg-slate-950 hover:bg-slate-850 border border-slate-800 flex items-center justify-between text-left transition cursor-pointer group"
               >
@@ -96,8 +89,8 @@ export const LoginPage: React.FC = () => {
                   </div>
                 </div>
 
-                <span className="text-[10px] px-2 py-1 rounded bg-emerald-500/15 text-emerald-400 font-extrabold border border-emerald-500/20">
-                  Quick Login
+                <span className="text-[10px] px-2.5 py-1 rounded bg-emerald-500/15 text-emerald-400 font-extrabold border border-emerald-500/20">
+                  Login Now
                 </span>
               </button>
             ))}
