@@ -11,6 +11,7 @@ import verificationRouter from './routes/verification';
 import analyticsRouter from './routes/analytics';
 import creativesRouter from './routes/creatives';
 import docsRouter from './routes/docs';
+import taxRouter from './routes/tax';
 
 import { rateLimiter } from './middleware/rate-limit';
 import { requestTracing } from './middleware/tracing';
@@ -49,6 +50,7 @@ app.route('/api/verification', verificationRouter);
 app.route('/api/analytics', analyticsRouter);
 app.route('/api/creatives', creativesRouter);
 app.route('/api/docs', docsRouter);
+app.route('/api/tax', taxRouter);
 
 // 6. Stripe & Protected Routes
 app.route('/api/stripe', stripeRouter);
@@ -71,6 +73,7 @@ app.get('/', (c) => {
       '/api/analytics',
       '/api/creatives',
       '/api/docs/openapi.json',
+      '/api/tax/calculate',
     ],
   });
 });
