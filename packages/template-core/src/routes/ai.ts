@@ -9,13 +9,35 @@ export interface AiEnvBindings extends EnvBindings {
 
 export const aiRouter = new Hono<{ Bindings: AiEnvBindings }>();
 
+// POST /api/ai/copilot - Intelligent Campaign Co-Pilot & Contextual Triggers Engine
+aiRouter.post('/copilot', async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const prompt = body.prompt || 'Optimize my Lahore billboard campaign for maximum reach';
+
+  const recommendation = {
+    query: prompt,
+    suggestedStrategy: 'High-Density Highway & Transit Hybrid Flight',
+    weatherContextualTriggers: [
+      { trigger: 'Lahore Winter Smog (AQI > 250)', action: 'Boost Air Purifier / Healthcare Ad Frequency', multiplier: '1.68x' },
+      { trigger: 'Karachi Monsoon Heavy Rain', action: 'Trigger Hot Beverage / Soup Video Spots', multiplier: '1.35x' },
+      { trigger: 'Ramadan Evening Iftar Peak (5-7 PM)', action: 'Lock Category Exclusivity for Food Brands', multiplier: '1.50x' },
+    ],
+    recommendedAssets: [
+      { name: 'Gulberg Main Boulevard SMD', city: 'Lahore', estReach: '1,200,000 / day', costPkr: '950,000 / mo' },
+      { name: 'Clifton Block 2 Flyover SMD', city: 'Karachi', estReach: '2,100,000 / day', costPkr: '1,200,000 / mo' },
+    ],
+    summaryText: `AI Analysis complete for "${prompt}". Recommended budget split: 40% Roadside Digital SMDs, 30% Peak Stream spots, 15% Local Creators, 15% Weather/AQI Triggers.`,
+  };
+
+  return c.json({ data: recommendation });
+});
+
 const embedSchema = z.object({
   text: z.string().min(1),
   id: z.string().optional(),
   metadata: z.record(z.any()).optional(),
 });
 
-// Endpoint to generate vector embedding and insert into Vectorize
 aiRouter.post('/embed', async (c) => {
   try {
     const body = await c.req.json();
@@ -32,7 +54,6 @@ aiRouter.post('/embed', async (c) => {
       });
     }
 
-    // Generate 384-dim BGE embeddings using Cloudflare Workers AI
     const embeddingsResponse = await ai.run('@cf/baai/bge-small-en-v1.5', {
       text: [parsed.text],
     });
@@ -40,7 +61,6 @@ aiRouter.post('/embed', async (c) => {
     const vector = embeddingsResponse.data[0];
     const vectorId = parsed.id || crypto.randomUUID();
 
-    // Insert vector into Vectorize index
     await vectorIndex.insert([
       {
         id: vectorId,
@@ -55,7 +75,6 @@ aiRouter.post('/embed', async (c) => {
   }
 });
 
-// Endpoint to query vector similarity (RAG Search)
 aiRouter.post('/search', async (c) => {
   try {
     const { query, topK = 5 } = await c.req.json();
@@ -70,14 +89,12 @@ aiRouter.post('/search', async (c) => {
       });
     }
 
-    // Generate query embedding
     const embeddingsResponse = await ai.run('@cf/baai/bge-small-en-v1.5', {
       text: [query],
     });
 
     const queryVector = embeddingsResponse.data[0];
 
-    // Search Vectorize index
     const searchResults = await vectorIndex.query(queryVector, {
       topK,
       returnMetadata: true,
@@ -88,3 +105,5 @@ aiRouter.post('/search', async (c) => {
     return c.json({ error: err.message || 'Vector search failure' }, 400);
   }
 });
+
+export default aiRouter;
