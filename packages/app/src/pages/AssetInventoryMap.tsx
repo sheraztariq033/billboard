@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Search, MapPin, Eye, Calendar, Sparkles, Filter, ChevronRight, Award, Layers, X, RefreshCw, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Search, MapPin, Eye, Calendar, Sparkles, Filter, ChevronRight, Award, Layers, X, RefreshCw, Loader2, Map as MapIcon, Grid } from 'lucide-react';
 import { AssetDetailModal } from '../components/AssetDetailModal';
 import { Billboard3DSimulatorModal } from '../components/3dSimulatorModal';
 import { api } from '../lib/api';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 interface InventoryItem {
   id: string;
@@ -16,7 +18,18 @@ interface InventoryItem {
   softExpiryDate: string;
   imageUrl: string;
   status: string;
+  latitude?: number;
+  longitude?: number;
 }
+
+// Default coordinates for Pakistan cities
+const CITY_COORDS: Record<string, [number, number]> = {
+  Lahore: [31.5204, 74.3587],
+  Karachi: [24.8607, 67.0011],
+  Islamabad: [33.6844, 73.0479],
+  Peshawar: [34.0151, 71.5249],
+  Multan: [30.1575, 71.5249],
+};
 
 export const AssetInventoryMap: React.FC = () => {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
@@ -25,8 +38,13 @@ export const AssetInventoryMap: React.FC = () => {
   const [selectedCity, setSelectedCity] = useState('ALL');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [minTraffic, setMinTraffic] = useState(0);
+  const [viewMode, setViewMode] = useState<'MAP' | 'GRID'>('GRID');
   const [inspectingAsset, setInspectingAsset] = useState<any | null>(null);
   const [simulatingTitle, setSimulatingTitle] = useState<string | null>(null);
+
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const markersRef = useRef<L.Marker[]>([]);
 
   // Fetch real assets from backend API
   useEffect(() => {
@@ -65,6 +83,59 @@ export const AssetInventoryMap: React.FC = () => {
     });
   }, [inventory, searchQuery, selectedCity, selectedCategory, minTraffic]);
 
+  // Leaflet Map Initialization & Marker Updates
+  useEffect(() => {
+    if (viewMode !== 'MAP' || !mapContainerRef.current) return;
+
+    if (!mapInstanceRef.current) {
+      const initialCenter = CITY_COORDS[selectedCity] || [31.5204, 74.3587];
+      const map = L.map(mapContainerRef.current).setView(initialCenter, selectedCity === 'ALL' ? 6 : 12);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      }).addTo(map);
+
+      mapInstanceRef.current = map;
+    }
+
+    // Clear existing markers
+    markersRef.current.forEach((marker) => marker.remove());
+    markersRef.current = [];
+
+    // Add markers for filtered inventory
+    filteredInventory.forEach((item) => {
+      const lat = item.latitude || (CITY_COORDS[item.locationCity] ? CITY_COORDS[item.locationCity][0] : 31.5204);
+      const lng = item.longitude || (CITY_COORDS[item.locationCity] ? CITY_COORDS[item.locationCity][1] : 74.3587);
+
+      const customIcon = L.divIcon({
+        className: 'custom-leaflet-marker',
+        html: `
+          <div style="background: #10b981; color: white; padding: 4px 8px; border-radius: 8px; font-weight: 800; font-size: 11px; border: 2px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.4); white-space: nowrap;">
+            📍 ${(item.monthlyRatePkr / 1000).toFixed(0)}k PKR
+          </div>
+        `,
+        iconSize: [60, 24],
+        iconAnchor: [30, 12],
+      });
+
+      const marker = L.marker([lat, lng], { icon: customIcon }).addTo(mapInstanceRef.current!);
+
+      marker.bindPopup(`
+        <div style="font-family: system-ui, sans-serif; min-width: 180px;">
+          <strong style="font-size: 13px; color: #0f172a;">${item.title}</strong>
+          <p style="font-size: 11px; color: #64748b; margin: 4px 0;">${item.locationArea}, ${item.locationCity}</p>
+          <p style="font-size: 12px; font-weight: 800; color: #059669; margin-bottom: 6px;">${item.monthlyRatePkr.toLocaleString()} PKR / Month</p>
+        </div>
+      `);
+
+      markersRef.current.push(marker);
+    });
+
+    if (selectedCity !== 'ALL' && CITY_COORDS[selectedCity] && mapInstanceRef.current) {
+      mapInstanceRef.current.setView(CITY_COORDS[selectedCity], 12);
+    }
+  }, [viewMode, filteredInventory, selectedCity]);
+
   const resetFilters = () => {
     setSearchQuery('');
     setSelectedCity('ALL');
@@ -79,15 +150,38 @@ export const AssetInventoryMap: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/20 text-emerald-400 text-xs font-black mb-2">
-              <MapPin className="w-3.5 h-3.5" /> Pinned Ad Properties & Inventory
+              <MapPin className="w-3.5 h-3.5" /> OpenStreetMap & GIS Inventory Engine
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black font-display text-white">Commercial Inventory & Live Search</h2>
-            <p className="text-xs text-slate-400 mt-1">Multi-param filter connected to Cloudflare Workers & D1 Database API</p>
+            <h2 className="text-2xl sm:text-3xl font-black font-display text-white">Commercial Inventory & Map Explorer</h2>
+            <p className="text-xs text-slate-400 mt-1">Multi-param search connected to Leaflet GIS map and Cloudflare Workers API</p>
           </div>
 
-          <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-right">
-            <span className="text-[10px] text-slate-400 font-bold uppercase block">Matching Properties</span>
-            <span className="text-2xl font-black text-emerald-400 font-display">{filteredInventory.length} Available</span>
+          <div className="flex items-center gap-3">
+            <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+              <button
+                type="button"
+                onClick={() => setViewMode('GRID')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-extrabold flex items-center gap-1 transition cursor-pointer ${
+                  viewMode === 'GRID' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Grid className="w-3.5 h-3.5" /> Grid
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('MAP')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-extrabold flex items-center gap-1 transition cursor-pointer ${
+                  viewMode === 'MAP' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <MapIcon className="w-3.5 h-3.5" /> Live Map
+              </button>
+            </div>
+
+            <div className="bg-slate-950 px-3 py-2 rounded-xl border border-slate-800 text-right">
+              <span className="text-[10px] text-slate-400 font-bold uppercase block">Matching</span>
+              <span className="text-lg font-black text-emerald-400 font-display">{filteredInventory.length} Available</span>
+            </div>
           </div>
         </div>
       </div>
@@ -118,6 +212,8 @@ export const AssetInventoryMap: React.FC = () => {
               <option value="Lahore">Lahore</option>
               <option value="Karachi">Karachi</option>
               <option value="Islamabad">Islamabad</option>
+              <option value="Peshawar">Peshawar</option>
+              <option value="Multan">Multan</option>
             </select>
           </div>
 
@@ -165,11 +261,16 @@ export const AssetInventoryMap: React.FC = () => {
         </div>
       </div>
 
-      {/* Loading State */}
+      {/* View Modes */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center p-12 bg-slate-900 border border-slate-800 rounded-2xl">
           <Loader2 className="w-8 h-8 text-emerald-400 animate-spin mb-3" />
           <p className="text-xs text-slate-400 font-medium">Fetching live inventory from Cloudflare D1 database API...</p>
+        </div>
+      ) : viewMode === 'MAP' ? (
+        /* Leaflet Map Container */
+        <div className="relative rounded-2xl overflow-hidden border border-slate-800 h-[500px] z-0">
+          <div ref={mapContainerRef} className="w-full h-full" />
         </div>
       ) : (
         /* Inventory Cards Grid */
