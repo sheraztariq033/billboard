@@ -17,6 +17,8 @@ const ShopkeeperPwaDashboard = lazy(() => import('./pages/ShopkeeperPwaDashboard
 const CreatorDashboard = lazy(() => import('./pages/CreatorDashboard').then(m => ({ default: m.CreatorDashboard })));
 const AdminControlPortal = lazy(() => import('./pages/AdminControlPortal').then(m => ({ default: m.AdminControlPortal })));
 const CreativeStudio = lazy(() => import('./pages/CreativeStudio').then(m => ({ default: m.CreativeStudio })));
+const AnalyticsAdminEnterprise = lazy(() => import('./pages/AnalyticsAdminEnterprise').then(m => ({ default: m.AnalyticsAdminEnterprise })));
+const PhygitalCampaignBuilder = lazy(() => import('./pages/PhygitalCampaignBuilder').then(m => ({ default: m.PhygitalCampaignBuilder })));
 
 const PageLoader = () => (
   <div className="flex-1 flex items-center justify-center min-h-[60vh]">
@@ -75,10 +77,12 @@ const App: React.FC = () => (
               <Route index element={<Suspense fallback={<PageLoader />}><DashboardHome /></Suspense>} />
               <Route path="explore" element={<Suspense fallback={<PageLoader />}><AssetInventoryMap /></Suspense>} />
               <Route path="planner" element={<Suspense fallback={<PageLoader />}><AdvertiserDashboard /></Suspense>} />
+              <Route path="phygital" element={<Suspense fallback={<PageLoader />}><PhygitalCampaignBuilder /></Suspense>} />
               <Route path="creatives" element={<Suspense fallback={<PageLoader />}><CreativeStudio /></Suspense>} />
               <Route path="owner" element={<Suspense fallback={<PageLoader />}><VendorDashboard /></Suspense>} />
               <Route path="earner" element={<Suspense fallback={<PageLoader />}><ShopkeeperPwaDashboard /></Suspense>} />
               <Route path="creator" element={<Suspense fallback={<PageLoader />}><CreatorDashboard /></Suspense>} />
+              <Route path="analytics" element={<Suspense fallback={<PageLoader />}><AnalyticsAdminEnterprise /></Suspense>} />
               <Route path="admin" element={<Suspense fallback={<PageLoader />}><AdminControlPortal /></Suspense>} />
             </Route>
 
