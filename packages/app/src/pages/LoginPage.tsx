@@ -1,10 +1,18 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { LogIn, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
+import { useAuth, UserRole } from '../context/AuthContext';
+import { LogIn, Eye, EyeOff, AlertCircle, Loader2, Building2, Layers, Car, Video, ShieldAlert, Sparkles } from 'lucide-react';
+
+const DEMO_ACCOUNTS: { role: UserRole; email: string; pass: string; label: string; desc: string; icon: React.ReactNode }[] = [
+  { role: 'advertiser', email: 'advertiser@omnigrid.pk', pass: 'Pakistan123!', label: 'Advertiser', desc: 'Media buying & campaign planner', icon: <Building2 className="w-4 h-4 text-emerald-400" /> },
+  { role: 'owner', email: 'owner@omnigrid.pk', pass: 'Pakistan123!', label: 'Asset Owner', desc: 'Billboard ERP & yield management', icon: <Layers className="w-4 h-4 text-indigo-400" /> },
+  { role: 'earner', email: 'earner@omnigrid.pk', pass: 'Pakistan123!', label: 'Micro-Earner', desc: 'Geotagged proof verification', icon: <Car className="w-4 h-4 text-amber-400" /> },
+  { role: 'creator', email: 'creator@omnigrid.pk', pass: 'Pakistan123!', label: 'Creator', desc: 'Brand deal brief negotiator', icon: <Video className="w-4 h-4 text-purple-400" /> },
+  { role: 'admin', email: 'admin@omnigrid.pk', pass: 'Pakistan123!', label: 'Super-Admin', desc: 'Platform operations & NOC approvals', icon: <ShieldAlert className="w-4 h-4 text-rose-400" /> },
+];
 
 export const LoginPage: React.FC = () => {
-  const { login } = useAuth();
+  const { login, signup } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
@@ -27,7 +35,27 @@ export const LoginPage: React.FC = () => {
       await login(email.trim(), password);
       navigate('/', { replace: true });
     } catch (err: any) {
-      setError(err.message || 'Login failed. Please try again.');
+      setError(err.message || 'Login failed. Check your credentials.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDemoLogin = async (demoEmail: string, demoPass: string, demoRole: UserRole, demoName: string) => {
+    setError('');
+    setIsSubmitting(true);
+    try {
+      // Try logging in first
+      await login(demoEmail, demoPass);
+      navigate('/', { replace: true });
+    } catch (err) {
+      // If demo user doesn't exist yet, auto-register them!
+      try {
+        await signup(demoName, demoEmail, demoPass, demoRole);
+        navigate('/', { replace: true });
+      } catch (signupErr: any) {
+        setError(signupErr.message || 'Demo login failed');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -35,18 +63,49 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div className="min-h-dvh flex items-center justify-center bg-slate-950 px-4 py-8">
-      <div className="w-full max-w-md space-y-8">
+      <div className="w-full max-w-md space-y-6">
         {/* Logo */}
         <div className="text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-black text-2xl shadow-lg shadow-emerald-500/25 mb-4">
             OG
           </div>
           <h1 className="text-3xl font-black text-white tracking-tight">Welcome Back</h1>
-          <p className="text-sm text-slate-400 mt-1">Sign in to your OMNI-GRID account</p>
+          <p className="text-sm text-slate-400 mt-1">Sign in to OMNI-GRID PAKISTAN</p>
+        </div>
+
+        {/* 1-Click Fast Demo Login Selector */}
+        <div className="p-4 rounded-2xl bg-slate-900 border border-emerald-500/30 space-y-3">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400">
+            <Sparkles className="w-4 h-4" /> Instant 1-Click Demo Login
+          </div>
+
+          <div className="grid grid-cols-1 gap-2">
+            {DEMO_ACCOUNTS.map((acc) => (
+              <button
+                key={acc.role}
+                type="button"
+                onClick={() => handleDemoLogin(acc.email, acc.pass, acc.role, acc.label)}
+                disabled={isSubmitting}
+                className="p-2.5 rounded-xl bg-slate-950 hover:bg-slate-850 border border-slate-800 flex items-center justify-between text-left transition cursor-pointer group"
+              >
+                <div className="flex items-center gap-2.5">
+                  {acc.icon}
+                  <div>
+                    <span className="text-xs font-bold text-white group-hover:text-emerald-400 transition">{acc.label} Account</span>
+                    <span className="text-[10px] text-slate-400 block">{acc.email}</span>
+                  </div>
+                </div>
+
+                <span className="text-[10px] px-2 py-1 rounded bg-emerald-500/15 text-emerald-400 font-extrabold border border-emerald-500/20">
+                  Quick Login
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm">
               <AlertCircle className="w-4 h-4 shrink-0" />
@@ -75,7 +134,7 @@ export const LoginPage: React.FC = () => {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
+                placeholder="Enter password"
                 autoComplete="current-password"
                 className="w-full px-4 py-3 pr-12 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm placeholder:text-slate-500 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 transition"
               />
