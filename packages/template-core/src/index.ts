@@ -17,6 +17,7 @@ import commissionRouter from './routes/commission';
 import pricingRouter from './routes/pricing';
 import visionRouter from './routes/vision';
 import searchRouter from './routes/search';
+import notificationsRouter from './routes/notifications';
 
 import { rateLimiter } from './middleware/rate-limit';
 import { requestTracing } from './middleware/tracing';
@@ -61,6 +62,7 @@ app.route('/api/commission', commissionRouter);
 app.route('/api/pricing', pricingRouter);
 app.route('/api/vision', visionRouter);
 app.route('/api/search', searchRouter);
+app.route('/api/notifications', notificationsRouter);
 
 // 6. Stripe & Protected Routes
 app.route('/api/stripe', stripeRouter);
@@ -89,6 +91,7 @@ app.get('/', (c) => {
       '/api/pricing/calculate',
       '/api/vision/analyze',
       '/api/search/semantic',
+      '/api/notifications/send-alert',
     ],
   });
 });

@@ -67,6 +67,20 @@ function getFallbackResponse<T>(path: string, method: string, body: any): T {
     return { status: 'online', service: 'OMNI-GRID PAKISTAN Edge Engine' } as any;
   }
 
+  if (path.includes('/notifications/send-alert')) {
+    const phone = body?.phone || '+923001234567';
+    const campaign = body?.campaignName || 'Ramadan Beverage Launch';
+    return {
+      success: true,
+      recipientPhone: phone,
+      alertType: 'WHATSAPP_BOOKING_APPROVED',
+      channel: 'WhatsApp Business API',
+      timestamp: new Date().toISOString(),
+      status: 'DELIVERED',
+      messageSnippet: `[OMNI-GRID PAKISTAN Alert] Your booking for '${campaign}' is APPROVED. Payment locked in Escrow. View proof-of-play live stream: https://omni-grid-app.pages.dev/explore`,
+    } as any;
+  }
+
   if (path.includes('/search/semantic')) {
     return {
       query: body?.query || 'high impact DOOH near Gulberg Lahore',
