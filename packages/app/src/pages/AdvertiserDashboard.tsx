@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
-import { Sliders, Calendar, Clock, Lock, ShieldCheck, DollarSign, CheckCircle2, ChevronRight, Sparkles, Building2, ShoppingCart, Percent } from 'lucide-react';
-import { AssetDetailModal } from '../components/AssetDetailModal';
+import { Sliders, Calendar, Clock, Lock, ShieldCheck, DollarSign, CheckCircle2, ChevronRight, Sparkles, Building2, ShoppingCart, Percent, CreditCard, Loader2 } from 'lucide-react';
+import { api } from '../lib/api';
+import { useToast } from '../context/ToastContext';
+import { exportCommercialPdf } from '../utils/exportPdf';
 
 export const AdvertiserDashboard: React.FC = () => {
+  const { showToast } = useToast();
   const [budget, setBudget] = useState(3500000);
   const [durationDays, setDurationDays] = useState(30);
-  const [dayparting, setDayparting] = useState('FULL'); // 'FULL' | 'MORNING_RUSH' | 'EVENING_RUSH' | 'NIGHT_PEAK'
+  const [dayparting, setDayparting] = useState('FULL');
   const [isCategoryExclusive, setIsCategoryExclusive] = useState(false);
   const [paymentMilestone, setPaymentMilestone] = useState<'FULL' | 'MILESTONE_30_70'>('FULL');
+  const [paymentMethod, setPaymentMethod] = useState<'BANK_TRANSFER' | 'JAZZCASH' | 'EASYPAISA'>('BANK_TRANSFER');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCheckoutSuccess, setIsCheckoutSuccess] = useState(false);
 
   // Discount Math
@@ -19,26 +24,63 @@ export const AdvertiserDashboard: React.FC = () => {
   const netInvoice = grossSubtotal + pstTax;
 
   const deposit30Amount = Math.round(netInvoice * 0.30);
+  const dueNowAmount = paymentMilestone === 'MILESTONE_30_70' ? deposit30Amount : netInvoice;
 
-  const handleCheckout = () => {
-    setIsCheckoutSuccess(true);
-    setTimeout(() => setIsCheckoutSuccess(false), 4000);
+  const handleCheckout = async () => {
+    setIsSubmitting(true);
+    try {
+      await api.post('/campaigns/bookings', {
+        budget,
+        durationDays,
+        dayparting,
+        isCategoryExclusive,
+        paymentMilestone,
+        paymentMethod,
+        title: `OMNI Campaign (${durationDays} Days)`,
+        targetCity: 'Lahore',
+      });
+
+      setIsCheckoutSuccess(true);
+      showToast(`Escrow Locked! Booking confirmed via ${paymentMethod.replace('_', ' ')}.`, 'success');
+
+      // Export Tax Invoice PDF
+      const html = `
+        <table class="table">
+          <thead><tr><th>Booking Charge Item</th><th>Amount (PKR)</th></tr></thead>
+          <tbody>
+            <tr><td>Base Media Lease (${durationDays} Days Flight)</td><td>${budget.toLocaleString()} PKR</td></tr>
+            ${discountAmount > 0 ? `<tr><td>Volume Discount (-${discountPct}%)</td><td>-${discountAmount.toLocaleString()} PKR</td></tr>` : ''}
+            ${exclusivityFee > 0 ? `<tr><td>Category Exclusivity Lock (+15%)</td><td>+${exclusivityFee.toLocaleString()} PKR</td></tr>` : ''}
+            <tr><td>Provincial Sales Tax (16% PRA/PST)</td><td>+${pstTax.toLocaleString()} PKR</td></tr>
+            <tr class="total-row"><td>Total Net Invoice:</td><td>${netInvoice.toLocaleString()} PKR</td></tr>
+            <tr><td><strong>Amount Deposited / Due Now:</strong></td><td><strong>${dueNowAmount.toLocaleString()} PKR (${paymentMilestone === 'MILESTONE_30_70' ? '30% Deposit' : '100% Upfront'})</strong></td></tr>
+          </tbody>
+        </table>
+      `;
+      exportCommercialPdf(`Tax Invoice - OMNI Booking ${Date.now()}`, html);
+
+      setTimeout(() => setIsCheckoutSuccess(false), 5000);
+    } catch (err: any) {
+      showToast(err.message || 'Booking submission failed', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="space-y-6 animate-fade-in pb-12">
       {/* Header */}
-      <div className="glass-panel p-6 border border-indigo-500/30 relative overflow-hidden">
+      <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 relative overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/20 text-indigo-400 text-xs font-black mb-2">
-              <Building2 className="w-3.5 h-3.5" /> Advertiser Media Buying Command
+              <Building2 className="w-3.5 h-3.5" /> Media Buying Command & Escrow Checkout
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black font-display text-slate-900 dark:text-white">Media Buying & Dayparting Planner</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Configure campaign duration, hourly dayparting flighting, category exclusivity & milestone escrow</p>
+            <h2 className="text-2xl sm:text-3xl font-black font-display text-white">Media Buying & Dayparting Planner</h2>
+            <p className="text-xs text-slate-400 mt-1">Configure flight schedule, category exclusivity, milestone deposit & Pakistani payment gateways</p>
           </div>
 
-          <div className="bg-og-bg/80 p-4 rounded-2xl border border-white/[0.08] text-right min-w-[200px]">
+          <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-right min-w-[200px]">
             <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">Net Tax Inclusive Invoice</span>
             <p className="text-2xl font-black text-emerald-400 font-display">{netInvoice.toLocaleString()} PKR</p>
             <span className="text-[10px] text-indigo-300 font-bold block mt-0.5">Includes 16% PRA/PST Sales Tax</span>
@@ -47,7 +89,7 @@ export const AdvertiserDashboard: React.FC = () => {
       </div>
 
       {/* Campaign Budget & Duration Engine */}
-      <div className="glass-panel p-6 border border-white/[0.08] space-y-6">
+      <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-6">
         <div className="space-y-3">
           <div className="flex justify-between items-baseline">
             <label className="text-sm font-bold text-slate-300 flex items-center gap-2">
@@ -85,7 +127,7 @@ export const AdvertiserDashboard: React.FC = () => {
                 className={`p-3 rounded-xl border text-center transition cursor-pointer ${
                   durationDays === d.days
                     ? 'bg-emerald-600 border-emerald-500 text-white font-extrabold shadow-md'
-                    : 'bg-og-bg border-white/[0.06] text-slate-400 hover:text-white'
+                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
                 }`}
               >
                 <span className="text-xs font-bold block">{d.label}</span>
@@ -95,7 +137,7 @@ export const AdvertiserDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Hourly Dayparting Selector (Fixes Audit Problem #48) */}
+        {/* Hourly Dayparting Selector */}
         <div className="space-y-2">
           <label className="text-xs font-extrabold uppercase text-purple-400 flex items-center gap-1.5">
             <Clock className="w-4 h-4" /> Hourly Dayparting & Flight Schedule:
@@ -114,7 +156,7 @@ export const AdvertiserDashboard: React.FC = () => {
                 className={`p-3 rounded-xl border text-left transition cursor-pointer ${
                   dayparting === part.id
                     ? 'bg-purple-600/30 border-purple-500 text-white font-bold'
-                    : 'bg-og-bg border-white/[0.06] text-slate-400 hover:text-white'
+                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
                 }`}
               >
                 <span className="text-xs font-bold block">{part.title}</span>
@@ -124,8 +166,8 @@ export const AdvertiserDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Competitor Exclusivity Lock (Fixes Audit Problem #55) */}
-        <div className="p-4 rounded-xl bg-og-bg/80 border border-white/[0.08] flex items-center justify-between">
+        {/* Competitor Exclusivity Lock */}
+        <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
           <div>
             <span className="text-xs font-extrabold text-white flex items-center gap-1.5">
               <Lock className="w-4 h-4 text-amber-400" /> Category Exclusivity Lock (+15% Premium Fee)
@@ -137,35 +179,64 @@ export const AdvertiserDashboard: React.FC = () => {
             type="checkbox"
             checked={isCategoryExclusive}
             onChange={(e) => setIsCategoryExclusive(e.target.checked)}
-            className="w-5 h-5 rounded border-slate-600 text-emerald-500 focus:ring-0 cursor-pointer"
+            className="w-5 h-5 rounded border-slate-700 text-emerald-500 focus:ring-0 cursor-pointer"
           />
         </div>
       </div>
 
+      {/* Payment Gateway Channel Selector */}
+      <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+        <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
+          <CreditCard className="w-4 h-4 text-indigo-400" /> Select Payment Channel Gateway
+        </h3>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {[
+            { id: 'BANK_TRANSFER', title: 'Manual Bank Transfer (IBAN/RAAST)', desc: 'Direct corporate bank escrow' },
+            { id: 'JAZZCASH', title: 'JazzCash Mobile Wallet', desc: 'Instant mobile account debit' },
+            { id: 'EASYPAISA', title: 'Easypaisa Gateway', desc: 'Instant digital wallet payout' },
+          ].map((pm) => (
+            <button
+              key={pm.id}
+              type="button"
+              onClick={() => setPaymentMethod(pm.id as any)}
+              className={`p-3.5 rounded-xl border text-left transition cursor-pointer ${
+                paymentMethod === pm.id
+                  ? 'bg-indigo-600/30 border-indigo-500 text-white font-extrabold'
+                  : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+              }`}
+            >
+              <span className="text-xs font-bold block text-white">{pm.title}</span>
+              <span className="text-[10px] text-indigo-300 block mt-0.5">{pm.desc}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Commercial Tax Invoice & Checkout Box */}
-      <div className="glass-panel p-6 border border-emerald-500/30 space-y-4">
-        <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-          <ShoppingCart className="w-5 h-5 text-emerald-400" /> Phygital Campaign Tax Invoice & Milestone Escrow
+      <div className="p-6 rounded-2xl bg-slate-900 border border-emerald-500/30 space-y-4">
+        <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+          <ShoppingCart className="w-5 h-5 text-emerald-400" /> Phygital Campaign Tax Invoice & Escrow Checkout
         </h3>
 
         <div className="space-y-2 text-xs">
-          <div className="flex justify-between text-slate-300 py-1.5 border-b border-white/[0.06]">
+          <div className="flex justify-between text-slate-300 py-1.5 border-b border-slate-800">
             <span>Base Media Budget ({durationDays} Days Display):</span>
             <strong className="text-white">{budget.toLocaleString()} PKR</strong>
           </div>
           {discountAmount > 0 && (
-            <div className="flex justify-between text-emerald-400 py-1.5 border-b border-white/[0.06]">
+            <div className="flex justify-between text-emerald-400 py-1.5 border-b border-slate-800">
               <span>Volume Discount Savings (-{discountPct}%):</span>
               <strong>-{discountAmount.toLocaleString()} PKR</strong>
             </div>
           )}
           {exclusivityFee > 0 && (
-            <div className="flex justify-between text-amber-400 py-1.5 border-b border-white/[0.06]">
+            <div className="flex justify-between text-amber-400 py-1.5 border-b border-slate-800">
               <span>Category Exclusivity Fee (+15% Premium):</span>
               <strong>+{exclusivityFee.toLocaleString()} PKR</strong>
             </div>
           )}
-          <div className="flex justify-between text-slate-300 py-1.5 border-b border-white/[0.06]">
+          <div className="flex justify-between text-slate-300 py-1.5 border-b border-slate-800">
             <span>Provincial Sales Tax (16% PRA/PST Tax):</span>
             <strong className="text-amber-400">+{pstTax.toLocaleString()} PKR</strong>
           </div>
@@ -181,7 +252,7 @@ export const AdvertiserDashboard: React.FC = () => {
             type="button"
             onClick={() => setPaymentMilestone('FULL')}
             className={`p-3.5 rounded-xl border text-left text-xs font-bold transition cursor-pointer ${
-              paymentMilestone === 'FULL' ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-og-bg border-white/[0.06] text-slate-400'
+              paymentMilestone === 'FULL' ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'
             }`}
           >
             <span>100% Full Upfront Escrow</span>
@@ -192,7 +263,7 @@ export const AdvertiserDashboard: React.FC = () => {
             type="button"
             onClick={() => setPaymentMilestone('MILESTONE_30_70')}
             className={`p-3.5 rounded-xl border text-left text-xs font-bold transition cursor-pointer ${
-              paymentMilestone === 'MILESTONE_30_70' ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-og-bg border-white/[0.06] text-slate-400'
+              paymentMilestone === 'MILESTONE_30_70' ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'
             }`}
           >
             <span>30% Deposit + 70% Post-Proof Launch</span>
@@ -202,16 +273,20 @@ export const AdvertiserDashboard: React.FC = () => {
 
         <button
           onClick={handleCheckout}
-          disabled={isCheckoutSuccess}
-          className="w-full py-4 btn-emerald text-sm font-extrabold flex items-center justify-center gap-2 shadow-xl cursor-pointer"
+          disabled={isSubmitting || isCheckoutSuccess}
+          className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-sm font-extrabold flex items-center justify-center gap-2 rounded-xl shadow-xl cursor-pointer"
         >
-          {isCheckoutSuccess ? (
+          {isSubmitting ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" /> Processing Booking & Locking Escrow...
+            </>
+          ) : isCheckoutSuccess ? (
             <>
               <CheckCircle2 className="w-5 h-5" /> Campaign Escrow Locked & Order Transmitted!
             </>
           ) : (
             <>
-              Lock Escrow & Deploy Campaign ({paymentMilestone === 'MILESTONE_30_70' ? deposit30Amount.toLocaleString() : netInvoice.toLocaleString()} PKR) <ChevronRight className="w-5 h-5" />
+              Lock Escrow & Deploy Campaign ({dueNowAmount.toLocaleString()} PKR) <ChevronRight className="w-5 h-5" />
             </>
           )}
         </button>
