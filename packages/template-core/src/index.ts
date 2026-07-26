@@ -10,10 +10,10 @@ import creatorsRouter from './routes/creators';
 import verificationRouter from './routes/verification';
 import analyticsRouter from './routes/analytics';
 import creativesRouter from './routes/creatives';
+import docsRouter from './routes/docs';
 
 import { rateLimiter } from './middleware/rate-limit';
 import { requestTracing } from './middleware/tracing';
-import { authGuard } from './middleware/auth-guard';
 import { initAuth, EnvBindings } from './auth';
 
 const app = new Hono<{ Bindings: EnvBindings }>();
@@ -48,6 +48,7 @@ app.route('/api/creators', creatorsRouter);
 app.route('/api/verification', verificationRouter);
 app.route('/api/analytics', analyticsRouter);
 app.route('/api/creatives', creativesRouter);
+app.route('/api/docs', docsRouter);
 
 // 6. Stripe & Protected Routes
 app.route('/api/stripe', stripeRouter);
@@ -69,6 +70,7 @@ app.get('/', (c) => {
       '/api/verification/upload',
       '/api/analytics',
       '/api/creatives',
+      '/api/docs/openapi.json',
     ],
   });
 });
