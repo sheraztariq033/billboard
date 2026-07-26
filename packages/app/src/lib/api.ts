@@ -67,6 +67,28 @@ function getFallbackResponse<T>(path: string, method: string, body: any): T {
     return { status: 'online', service: 'OMNI-GRID PAKISTAN Edge Engine' } as any;
   }
 
+  if (path.includes('/vision/analyze')) {
+    return {
+      assetId: body?.assetId || 'lhr_1',
+      timestamp: new Date().toISOString(),
+      aiEngine: 'Cloudflare Edge Computer Vision Model v2.4',
+      detectedVehicleCounts: {
+        passengerCars: 4820,
+        motorcyclesBikes: 11450,
+        busesTrucks: 890,
+        rickshawsChingchi: 2130,
+        totalVehiclesPassed: 19290,
+      },
+      dwellTimeMetrics: {
+        avgDwellTimeSeconds: 14.8,
+        trafficCongestionLevel: 'MODERATE_PEAK',
+        privacyBlurringApplied: true,
+        licensePlatesBlurredCount: 19290,
+      },
+      attentionImpressionScore: '98.4 / 100',
+    } as any;
+  }
+
   if (path.includes('/pricing/calculate')) {
     const base = Number(body?.baseDailyRatePkr || 35000);
     const occ = Number(body?.occupancyRatePct || 85);
