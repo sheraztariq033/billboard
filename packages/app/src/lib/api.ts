@@ -67,6 +67,72 @@ function getFallbackResponse<T>(path: string, method: string, body: any): T {
     return { status: 'online', service: 'OMNI-GRID PAKISTAN Edge Engine' } as any;
   }
 
+  if (path.includes('/currency/rates')) {
+    return {
+      baseCurrency: 'PKR',
+      timestamp: new Date().toISOString(),
+      rates: {
+        PKR: 1.0,
+        USD: 0.0036,
+        AED: 0.0132,
+        GBP: 0.0028,
+      },
+    } as any;
+  }
+
+  if (path.includes('/tax/calculate')) {
+    const gross = Number(body?.grossAmountPkr || 1000000);
+    const uType = body?.userType || 'CORPORATE';
+    const pst = Math.round(gross * 0.16);
+    const wPct = uType === 'CORPORATE' ? 3 : 10;
+    const wht = Math.round(gross * (wPct / 100));
+    return {
+      grossAmountPkr: gross,
+      userType: uType,
+      pstTaxPkr: pst,
+      whtPct: wPct,
+      whtTaxPkr: wht,
+      netInvoicePkr: gross + pst,
+      netPayablePkr: gross + pst - wht,
+    } as any;
+  }
+
+  if (path.includes('/creatives')) {
+    if (method === 'POST') {
+      return {
+        message: 'Creative uploaded to R2 media library',
+        data: { id: `cr_${Date.now()}`, title: body?.title || 'Untitled', status: 'APPROVED', ...body },
+      } as any;
+    }
+    return {
+      count: 2,
+      data: [
+        {
+          id: 'cr_1',
+          title: 'Ramadan Beverage 60x20 High Res Billboard Spot',
+          fileName: 'ramadan_bev_60x20.png',
+          fileUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80',
+          mimeType: 'image/png',
+          format: 'PNG',
+          dimensions: '5760x1920',
+          fileSizeMb: 4.8,
+          status: 'APPROVED',
+        },
+        {
+          id: 'cr_2',
+          title: 'Q4 Telecom Launch Digital SMD 15s Video Spot',
+          fileName: 'q4_telecom_launch_15s.mp4',
+          fileUrl: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&w=800&q=80',
+          mimeType: 'video/mp4',
+          format: 'MP4',
+          dimensions: '1920x1080',
+          fileSizeMb: 14.2,
+          status: 'APPROVED',
+        },
+      ],
+    } as any;
+  }
+
   if (path.includes('/assets')) {
     if (method === 'POST') {
       return { message: 'Asset registered successfully in fallback mode', data: body } as any;
