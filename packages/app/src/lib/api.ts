@@ -67,6 +67,26 @@ function getFallbackResponse<T>(path: string, method: string, body: any): T {
     return { status: 'online', service: 'OMNI-GRID PAKISTAN Edge Engine' } as any;
   }
 
+  if (path.includes('/commission/calculate')) {
+    const gross = Number(body?.grossBookingPkr || 1000000);
+    const agentPct = Number(body?.agentCommissionPct || 2.5);
+    const platformPkr = Math.round(gross * 0.10);
+    const agentPkr = Math.round(gross * (agentPct / 100));
+    const ownerPkr = gross - platformPkr - agentPkr;
+
+    return {
+      grossBookingPkr: gross,
+      platformCommissionPkr: platformPkr,
+      agentPayoutPkr: agentPkr,
+      netOwnerPayoutPkr: ownerPkr,
+      waterfall: [
+        { party: 'OMNI-GRID Platform Fee (10%)', amountPkr: platformPkr },
+        { party: `Sales Agent Referral (${agentPct}%)`, amountPkr: agentPkr },
+        { party: 'Media Owner Escrow Payout', amountPkr: ownerPkr },
+      ],
+    } as any;
+  }
+
   if (path.includes('/currency/rates')) {
     return {
       baseCurrency: 'PKR',
