@@ -1,63 +1,161 @@
 import React, { useState } from 'react';
-import { ShoppingBag, Sparkles, Check, ChevronRight, Layers, CreditCard, ShieldCheck } from 'lucide-react';
+import { ShoppingBag, Sliders, CheckCircle2, ChevronRight, Sparkles, Building2, Layers, Tv, Video, Car, Loader2 } from 'lucide-react';
+import { api } from '../lib/api';
+import { useToast } from '../context/ToastContext';
 
 export const PhygitalCampaignBuilder: React.FC = () => {
-  const [selectedItems, setSelectedItems] = useState<string[]>([
-    'Main Boulevard Johar Town SMD (30 Days)',
-    '15x Food Creator Instagram Stories',
-    'Faisal Movers Bus Wraps (20 Buses)',
-  ]);
+  const { showToast } = useToast();
+  const [totalBudgetPkr, setTotalBudgetPkr] = useState(5000000);
+  const [targetCity, setTargetCity] = useState('Lahore');
+  const [campaignTitle, setCampaignTitle] = useState('Omnichannel Q4 Brand Launch');
+  const [isPackaging, setIsPackaging] = useState(false);
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [packagedData, setPackagedData] = useState<any | null>(null);
 
-  const totalCost = 1325000;
+  const handleGeneratePackage = async () => {
+    setIsPackaging(true);
+    try {
+      const res = await api.post<{ data: any }>('/campaigns/package', {
+        totalBudgetPkr,
+        targetCity,
+      });
+
+      setPackagedData(res.data);
+      showToast(`AI Campaign Package generated for ${totalBudgetPkr.toLocaleString()} PKR!`, 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Packaging failed', 'error');
+    } finally {
+      setIsPackaging(false);
+    }
+  };
+
+  const handleExecuteCampaign = async () => {
+    setIsExecuting(true);
+    try {
+      await api.post('/campaigns', {
+        title: campaignTitle,
+        totalBudgetPkr,
+        targetCity,
+      });
+
+      showToast(`Omnichannel Campaign "${campaignTitle}" executed & active in D1 database!`, 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Execution failed', 'error');
+    } finally {
+      setIsExecuting(false);
+    }
+  };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in pb-12">
       {/* Header */}
-      <div className="glass-panel p-6 border border-indigo-500/20 relative overflow-hidden">
-        <div className="flex items-center justify-between">
+      <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 relative overflow-hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/20 text-indigo-400 text-xs font-bold mb-2">
-              <ShoppingBag className="w-3.5 h-3.5" /> Phygital Cart & Ledger
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/20 text-emerald-400 text-xs font-black mb-2">
+              <ShoppingBag className="w-3.5 h-3.5" /> AI Omnichannel Packager & Builder
             </div>
-            <h2 className="text-2xl font-black text-white">Unified Campaign Builder</h2>
-            <p className="text-xs text-slate-400 mt-1">Combine roadside billboards, creators, and transit into a single contract</p>
+            <h2 className="text-2xl sm:text-3xl font-black font-display text-white">Multi-Asset Campaign Builder</h2>
+            <p className="text-xs text-slate-400 mt-1">Package budget across Roadside OOH, TV spots, social creators & retail shelf displays connected to Cloudflare Workers</p>
           </div>
-          <div className="text-right">
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Total Cart Estimate</span>
-            <span className="text-2xl font-black text-indigo-300">{totalCost.toLocaleString()} PKR</span>
-          </div>
-        </div>
-      </div>
 
-      {/* Cart Ledger */}
-      <div className="glass-panel p-6 border border-white/[0.08] space-y-4">
-        <h3 className="text-base font-bold text-white flex items-center gap-2">
-          <Layers className="w-5 h-5 text-indigo-400" /> Selected Campaign Channels ({selectedItems.length})
-        </h3>
-
-        <div className="space-y-2">
-          {selectedItems.map((item, idx) => (
-            <div key={idx} className="p-4 rounded-xl bg-og-bg/80 border border-white/[0.06] flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-indigo-600/15 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold text-xs">
-                  {idx + 1}
-                </div>
-                <span className="text-xs font-bold text-white">{item}</span>
-              </div>
-              <span className="text-xs font-bold text-emerald-400">Included</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="pt-4 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-xs text-slate-400 font-semibold">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" /> Escrow Deposit Protected by SparrowBase Bank Gateway
-          </div>
-          <button className="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-extrabold rounded-xl shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 transition cursor-pointer">
-            <CreditCard className="w-4 h-4" /> Deposit Escrow & Launch <ChevronRight className="w-4 h-4" />
+          <button
+            onClick={handleGeneratePackage}
+            disabled={isPackaging}
+            className="px-6 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-extrabold rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-pointer text-xs"
+          >
+            {isPackaging ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" /> Generating AI Package...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4" /> Generate AI Budget Package
+              </>
+            )}
           </button>
         </div>
       </div>
+
+      {/* Budget Controls */}
+      <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-300">Campaign Title</label>
+            <input
+              type="text"
+              value={campaignTitle}
+              onChange={(e) => setCampaignTitle(e.target.value)}
+              className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-300">Target City</label>
+            <select
+              value={targetCity}
+              onChange={(e) => setTargetCity(e.target.value)}
+              className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none"
+            >
+              <option value="Lahore">Lahore</option>
+              <option value="Karachi">Karachi</option>
+              <option value="Islamabad">Islamabad</option>
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-300">Total Budget (PKR)</label>
+            <input
+              type="number"
+              value={totalBudgetPkr}
+              onChange={(e) => setTotalBudgetPkr(Number(e.target.value))}
+              className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Package Breakdown Cards */}
+      {packagedData && (
+        <div className="p-6 rounded-2xl bg-slate-900 border border-emerald-500/30 space-y-4">
+          <h3 className="text-base font-bold text-white flex items-center justify-between">
+            <span>AI Budget Allocation Package</span>
+            <span className="text-xs text-emerald-400 font-extrabold">{packagedData.totalEstimatedImpressions} Est. Reach</span>
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {packagedData.allocations?.map((alloc: any, idx: number) => (
+              <div key={idx} className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5 text-xs">
+                <div className="flex justify-between font-bold text-white">
+                  <span>{alloc.channel} ({alloc.percentage}%)</span>
+                  <span className="text-emerald-400">{alloc.budgetPkr.toLocaleString()} PKR</span>
+                </div>
+                {alloc.suggestedAssets?.map((ass: any, aIdx: number) => (
+                  <p key={aIdx} className="text-[11px] text-slate-400">
+                    • {ass.name} ({ass.estImpressions || ass.estViews} impressions)
+                  </p>
+                ))}
+              </div>
+            ))}
+          </div>
+
+          <button
+            onClick={handleExecuteCampaign}
+            disabled={isExecuting}
+            className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-sm font-extrabold rounded-xl shadow-xl flex items-center justify-center gap-2 cursor-pointer"
+          >
+            {isExecuting ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" /> Executing & Deploying Campaign...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-5 h-5" /> Execute Omnichannel Campaign & Deploy to D1
+              </>
+            )}
+          </button>
+        </div>
+      )}
     </div>
   );
 };
