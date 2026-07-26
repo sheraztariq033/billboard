@@ -8,6 +8,7 @@ import assetsRouter from './routes/assets';
 import campaignsRouter from './routes/campaigns';
 import creatorsRouter from './routes/creators';
 import verificationRouter from './routes/verification';
+import analyticsRouter from './routes/analytics';
 
 import { rateLimiter } from './middleware/rate-limit';
 import { requestTracing } from './middleware/tracing';
@@ -44,6 +45,7 @@ app.route('/api/assets', assetsRouter);
 app.route('/api/campaigns', campaignsRouter);
 app.route('/api/creators', creatorsRouter);
 app.route('/api/verification', verificationRouter);
+app.route('/api/analytics', analyticsRouter);
 
 // 6. Stripe & Protected Routes
 app.route('/api/stripe', stripeRouter);
@@ -63,6 +65,7 @@ app.get('/', (c) => {
       '/api/campaigns/package',
       '/api/creators/calculate-rate',
       '/api/verification/upload',
+      '/api/analytics',
     ],
   });
 });
