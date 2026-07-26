@@ -16,6 +16,7 @@ const VendorDashboard = lazy(() => import('./pages/VendorDashboard').then(m => (
 const ShopkeeperPwaDashboard = lazy(() => import('./pages/ShopkeeperPwaDashboard').then(m => ({ default: m.ShopkeeperPwaDashboard })));
 const CreatorDashboard = lazy(() => import('./pages/CreatorDashboard').then(m => ({ default: m.CreatorDashboard })));
 const AdminControlPortal = lazy(() => import('./pages/AdminControlPortal').then(m => ({ default: m.AdminControlPortal })));
+const CreativeStudio = lazy(() => import('./pages/CreativeStudio').then(m => ({ default: m.CreativeStudio })));
 
 const PageLoader = () => (
   <div className="flex-1 flex items-center justify-center min-h-[60vh]">
@@ -26,7 +27,6 @@ const PageLoader = () => (
   </div>
 );
 
-/** Redirect to /login if not authenticated, show loading spinner while checking session */
 const RequireAuth: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -36,7 +36,6 @@ const RequireAuth: React.FC = () => {
   return <AppLayout />;
 };
 
-/** Redirect to / if already authenticated (for login/signup pages) */
 const GuestOnly: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -76,6 +75,7 @@ const App: React.FC = () => (
               <Route index element={<Suspense fallback={<PageLoader />}><DashboardHome /></Suspense>} />
               <Route path="explore" element={<Suspense fallback={<PageLoader />}><AssetInventoryMap /></Suspense>} />
               <Route path="planner" element={<Suspense fallback={<PageLoader />}><AdvertiserDashboard /></Suspense>} />
+              <Route path="creatives" element={<Suspense fallback={<PageLoader />}><CreativeStudio /></Suspense>} />
               <Route path="owner" element={<Suspense fallback={<PageLoader />}><VendorDashboard /></Suspense>} />
               <Route path="earner" element={<Suspense fallback={<PageLoader />}><ShopkeeperPwaDashboard /></Suspense>} />
               <Route path="creator" element={<Suspense fallback={<PageLoader />}><CreatorDashboard /></Suspense>} />

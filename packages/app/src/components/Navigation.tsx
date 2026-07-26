@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import {
   LayoutDashboard, MapPin, Calculator, Layers, Car, Video,
-  LogOut, User, Sun, Moon, ShieldAlert
+  LogOut, User, Sun, Moon, ShieldAlert, Image as ImageIcon
 } from 'lucide-react';
 
 const ROLE_LABELS: Record<string, string> = {
@@ -25,13 +25,14 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { to: '/',        icon: <LayoutDashboard className="w-5 h-5" />, label: 'Dashboard',         shortLabel: 'Home',     roles: ['advertiser', 'owner', 'earner', 'creator', 'enterprise', 'admin'] },
-  { to: '/explore', icon: <MapPin className="w-5 h-5" />,          label: 'Explore Inventory',  shortLabel: 'Explore',  roles: ['advertiser', 'owner', 'enterprise', 'admin'] },
-  { to: '/planner', icon: <Calculator className="w-5 h-5" />,      label: 'Campaign Planner',   shortLabel: 'Planner',  roles: ['advertiser', 'enterprise', 'admin'] },
-  { to: '/owner',   icon: <Layers className="w-5 h-5" />,          label: 'My Assets',          shortLabel: 'Assets',   roles: ['owner', 'admin'] },
-  { to: '/earner',  icon: <Car className="w-5 h-5" />,             label: 'Earn Tasks',         shortLabel: 'Earn',     roles: ['earner', 'admin'] },
-  { to: '/creator', icon: <Video className="w-5 h-5" />,           label: 'Creator Hub',        shortLabel: 'Create',   roles: ['creator', 'admin'] },
-  { to: '/admin',   icon: <ShieldAlert className="w-5 h-5 text-rose-400" />, label: 'Admin Panel', shortLabel: 'Admin', roles: ['admin'] },
+  { to: '/',          icon: <LayoutDashboard className="w-5 h-5" />, label: 'Dashboard',         shortLabel: 'Home',     roles: ['advertiser', 'owner', 'earner', 'creator', 'enterprise', 'admin'] },
+  { to: '/explore',   icon: <MapPin className="w-5 h-5" />,          label: 'Explore Inventory',  shortLabel: 'Explore',  roles: ['advertiser', 'owner', 'enterprise', 'admin'] },
+  { to: '/planner',   icon: <Calculator className="w-5 h-5" />,      label: 'Campaign Planner',   shortLabel: 'Planner',  roles: ['advertiser', 'enterprise', 'admin'] },
+  { to: '/creatives', icon: <ImageIcon className="w-5 h-5" />,       label: 'Creative Studio',    shortLabel: 'Studio',   roles: ['advertiser', 'owner', 'enterprise', 'admin'] },
+  { to: '/owner',     icon: <Layers className="w-5 h-5" />,          label: 'My Assets',          shortLabel: 'Assets',   roles: ['owner', 'admin'] },
+  { to: '/earner',    icon: <Car className="w-5 h-5" />,             label: 'Earn Tasks',         shortLabel: 'Earn',     roles: ['earner', 'admin'] },
+  { to: '/creator',   icon: <Video className="w-5 h-5" />,           label: 'Creator Hub',        shortLabel: 'Create',   roles: ['creator', 'admin'] },
+  { to: '/admin',     icon: <ShieldAlert className="w-5 h-5 text-rose-400" />, label: 'Admin Panel', shortLabel: 'Admin', roles: ['admin'] },
 ];
 
 const navLinkClasses = (isActive: boolean) =>

@@ -61,7 +61,7 @@ export const organizations = sqliteTable('organization', {
   name: text('name').notNull(),
   slug: text('slug').notNull().unique(),
   logoUrl: text('logoUrl'),
-  plan: text('plan').notNull().default('free'), // free, pro, enterprise
+  plan: text('plan').notNull().default('free'),
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull(),
 });
@@ -71,7 +71,7 @@ export const memberships = sqliteTable('membership', {
   id: text('id').primaryKey(),
   organizationId: text('organizationId').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
   userId: text('userId').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  role: text('role').notNull().default('member'), // owner, admin, member
+  role: text('role').notNull().default('member'),
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
 });
 
@@ -82,7 +82,7 @@ export const subscriptions = sqliteTable('subscription', {
   stripeCustomerId: text('stripeCustomerId').notNull().unique(),
   stripeSubscriptionId: text('stripeSubscriptionId').notNull().unique(),
   stripePriceId: text('stripePriceId').notNull(),
-  status: text('status').notNull(), // active, past_due, canceled, trialing
+  status: text('status').notNull(),
   currentPeriodStart: integer('currentPeriodStart', { mode: 'timestamp' }).notNull(),
   currentPeriodEnd: integer('currentPeriodEnd', { mode: 'timestamp' }).notNull(),
   cancelAtPeriodEnd: integer('cancelAtPeriodEnd', { mode: 'boolean' }).notNull().default(false),
@@ -123,37 +123,37 @@ export const adAssets = sqliteTable('ad_asset', {
   id: text('id').primaryKey(),
   ownerId: text('ownerId').notNull().references(() => users.id, { onDelete: 'cascade' }),
   title: text('title').notNull(),
-  category: text('category').notNull(), // 'OOH' | 'DOOH' | 'RETAIL_SHELF' | 'CIVIC_KIOSK' | 'CAMPUS' | 'TRANSIT' | 'HORECA' | 'CREATOR' | 'TV'
+  category: text('category').notNull(),
   locationCity: text('locationCity').notNull(),
   locationArea: text('locationArea').notNull(),
   latitude: real('latitude'),
   longitude: real('longitude'),
   dailyRatePkr: integer('dailyRatePkr').notNull(),
   monthlyRatePkr: integer('monthlyRatePkr').notNull(),
-  dimensions: text('dimensions'), // e.g., '60x20 ft' or 'Shelf 3x1 ft'
+  dimensions: text('dimensions'),
   estimatedDailyImpressions: integer('estimatedDailyImpressions').default(0),
-  softExpiryDate: text('softExpiryDate'), // e.g. 'Late August 2026'
+  softExpiryDate: text('softExpiryDate'),
   imageUrl: text('imageUrl'),
-  status: text('status').notNull().default('AVAILABLE'), // 'AVAILABLE' | 'OCCUPIED' | 'MAINTENANCE'
+  status: text('status').notNull().default('AVAILABLE'),
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull(),
 });
 
-// 2. Creator Profiles Table (Organic Social Influencer Rates & Metrics)
+// 2. Creator Profiles Table
 export const creatorProfiles = sqliteTable('creator_profile', {
   id: text('id').primaryKey(),
   userId: text('userId').notNull().unique().references(() => users.id, { onDelete: 'cascade' }),
-  platform: text('platform').notNull(), // 'INSTAGRAM' | 'TIKTOK' | 'YOUTUBE'
+  platform: text('platform').notNull(),
   handle: text('handle').notNull(),
   followerCount: integer('followerCount').notNull(),
   avgViews: integer('avgViews').notNull(),
   engagementRatePct: real('engagementRatePct').notNull(),
   calculatedRatePerPostPkr: integer('calculatedRatePerPostPkr').notNull(),
-  niche: text('niche').notNull(), // 'FOOD' | 'FASHION' | 'TECH' | 'LIFESTYLE'
+  niche: text('niche').notNull(),
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
 });
 
-// 3. Campaigns Table (Advertiser Omnichannel Campaigns)
+// 3. Campaigns Table
 export const campaigns = sqliteTable('campaign', {
   id: text('id').primaryKey(),
   advertiserId: text('advertiserId').notNull().references(() => users.id, { onDelete: 'cascade' }),
@@ -162,23 +162,23 @@ export const campaigns = sqliteTable('campaign', {
   startDate: integer('startDate', { mode: 'timestamp' }).notNull(),
   endDate: integer('endDate', { mode: 'timestamp' }).notNull(),
   targetCity: text('targetCity').notNull(),
-  status: text('status').notNull().default('DRAFT'), // 'DRAFT' | 'ACTIVE' | 'COMPLETED'
+  status: text('status').notNull().default('DRAFT'),
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull(),
 });
 
-// 4. Campaign Allocations Table (AI Budget Packaging Split)
+// 4. Campaign Allocations Table
 export const campaignAllocations = sqliteTable('campaign_allocation', {
   id: text('id').primaryKey(),
   campaignId: text('campaignId').notNull().references(() => campaigns.id, { onDelete: 'cascade' }),
   assetId: text('assetId').notNull().references(() => adAssets.id, { onDelete: 'cascade' }),
   allocatedBudgetPkr: integer('allocatedBudgetPkr').notNull(),
-  status: text('status').notNull().default('PENDING'), // 'PENDING' | 'CONFIRMED' | 'LIVE' | 'VERIFIED'
+  status: text('status').notNull().default('PENDING'),
   notes: text('notes'),
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
 });
 
-// 5. Proof of Performance & Verification Table
+// 5. Proof of Performance Table
 export const proofOfPerformance = sqliteTable('proof_of_performance', {
   id: text('id').primaryKey(),
   allocationId: text('allocationId').notNull().references(() => campaignAllocations.id, { onDelete: 'cascade' }),
@@ -187,12 +187,12 @@ export const proofOfPerformance = sqliteTable('proof_of_performance', {
   latitude: real('latitude').notNull(),
   longitude: real('longitude').notNull(),
   timestamp: integer('timestamp', { mode: 'timestamp' }).notNull(),
-  verifiedStatus: text('verifiedStatus').notNull().default('PENDING'), // 'PENDING' | 'APPROVED' | 'REJECTED'
-  payoutStatus: text('payoutStatus').notNull().default('HELD_IN_ESCROW'), // 'HELD_IN_ESCROW' | 'RELEASED'
+  verifiedStatus: text('verifiedStatus').notNull().default('PENDING'),
+  payoutStatus: text('payoutStatus').notNull().default('HELD_IN_ESCROW'),
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
 });
 
-// 6. Escrow Transactions Table (Mobile Wallet & Bank Payout Tracker)
+// 6. Escrow Transactions Table
 export const escrowTransactions = sqliteTable('escrow_transaction', {
   id: text('id').primaryKey(),
   campaignId: text('campaignId').notNull().references(() => campaigns.id, { onDelete: 'cascade' }),
@@ -201,7 +201,51 @@ export const escrowTransactions = sqliteTable('escrow_transaction', {
   easypaisaNumber: text('easypaisaNumber'),
   jazzcashNumber: text('jazzcashNumber'),
   bankDetails: text('bankDetails'),
-  status: text('status').notNull().default('HELD'), // 'HELD' | 'RELEASED' | 'REFUNDED'
+  status: text('status').notNull().default('HELD'),
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull(),
+});
+
+// 7. Creatives Table (Module 6: Uploaded Media Library)
+export const creatives = sqliteTable('creative', {
+  id: text('id').primaryKey(),
+  userId: text('userId').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  fileName: text('fileName').notNull(),
+  fileUrl: text('fileUrl').notNull(),
+  mimeType: text('mimeType').notNull(),
+  format: text('format').notNull(), // 'JPEG' | 'PNG' | 'MP4' | 'PDF'
+  dimensions: text('dimensions'), // e.g. '1920x1080'
+  fileSizeMb: real('fileSizeMb').notNull(),
+  status: text('status').notNull().default('APPROVED'), // 'DRAFT' | 'APPROVED' | 'REJECTED'
+  createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
+});
+
+// 8. Wishlists Table (Module 27: Saved Collections & Shortlists)
+export const wishlists = sqliteTable('wishlist', {
+  id: text('id').primaryKey(),
+  userId: text('userId').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  assetId: text('assetId').notNull().references(() => adAssets.id, { onDelete: 'cascade' }),
+  collectionName: text('collectionName').notNull().default('Favorites'),
+  createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
+});
+
+// 9. Asset Reviews Table (Module 28: Advertiser Ratings & Feedback)
+export const reviews = sqliteTable('asset_review', {
+  id: text('id').primaryKey(),
+  assetId: text('assetId').notNull().references(() => adAssets.id, { onDelete: 'cascade' }),
+  userId: text('userId').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  ratingStars: integer('ratingStars').notNull(), // 1 to 5
+  comment: text('comment').notNull(),
+  createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
+});
+
+// 10. TV Broadcast Channels Table (Module 20: TV Spot Booking)
+export const tvChannels = sqliteTable('tv_channel', {
+  id: text('id').primaryKey(),
+  channelName: text('channelName').notNull(), // 'Geo News' | 'ARY Digital' | 'Hum TV' | 'PTV Sports'
+  spotType: text('spotType').notNull(), // 'NEWS_TICKER' | 'TALKSHOW_LBAR' | 'BULLETIN_SPOT'
+  ratePerSpotPkr: integer('ratePerSpotPkr').notNull(),
+  estViewers: integer('estViewers').notNull(),
+  createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
 });
