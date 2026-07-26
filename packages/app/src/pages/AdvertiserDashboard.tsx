@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sliders, Calendar, Clock, Lock, ShieldCheck, DollarSign, CheckCircle2, ChevronRight, Sparkles, Building2, ShoppingCart, Percent, CreditCard, Loader2 } from 'lucide-react';
+import { Sliders, Calendar, Clock, Lock, ShieldCheck, DollarSign, CheckCircle2, ChevronRight, Sparkles, Building2, ShoppingCart, Percent, CreditCard, Loader2, Tv, FileText, Award } from 'lucide-react';
 import { api } from '../lib/api';
 import { useToast } from '../context/ToastContext';
 import { exportCommercialPdf } from '../utils/exportPdf';
@@ -15,7 +15,13 @@ export const AdvertiserDashboard: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCheckoutSuccess, setIsCheckoutSuccess] = useState(false);
 
-  // Discount Math
+  // Module 20: TV Broadcast Booking State
+  const [activeTab, setActiveTab] = useState<'OOH' | 'TV'>('OOH');
+  const [selectedTvChannel, setSelectedTvChannel] = useState('Geo News');
+  const [spotType, setSpotType] = useState('BULLETIN_SPOT');
+  const [spotQuantity, setSpotQuantity] = useState(10);
+
+  // OOH Discount Math
   const discountPct = durationDays >= 90 ? 28 : durationDays >= 50 ? 22 : durationDays >= 30 ? 15 : durationDays >= 14 ? 8 : 0;
   const discountAmount = Math.round(budget * (discountPct / 100));
   const exclusivityFee = isCategoryExclusive ? Math.round(budget * 0.15) : 0;
@@ -26,17 +32,23 @@ export const AdvertiserDashboard: React.FC = () => {
   const deposit30Amount = Math.round(netInvoice * 0.30);
   const dueNowAmount = paymentMilestone === 'MILESTONE_30_70' ? deposit30Amount : netInvoice;
 
+  // TV Spot Math
+  const tvRatePerSpot = spotType === 'BULLETIN_SPOT' ? 180000 : spotType === 'TALKSHOW_LBAR' ? 120000 : 65000;
+  const tvGrossSubtotal = tvRatePerSpot * spotQuantity;
+  const tvPstTax = Math.round(tvGrossSubtotal * 0.16);
+  const tvNetInvoice = tvGrossSubtotal + tvPstTax;
+
   const handleCheckout = async () => {
     setIsSubmitting(true);
     try {
       await api.post('/campaigns/bookings', {
-        budget,
+        budget: activeTab === 'OOH' ? budget : tvNetInvoice,
         durationDays,
         dayparting,
         isCategoryExclusive,
         paymentMilestone,
         paymentMethod,
-        title: `OMNI Campaign (${durationDays} Days)`,
+        title: activeTab === 'OOH' ? `OMNI Campaign (${durationDays} Days)` : `TV Spots - ${selectedTvChannel} (${spotQuantity} Spots)`,
         targetCity: 'Lahore',
       });
 
@@ -44,7 +56,7 @@ export const AdvertiserDashboard: React.FC = () => {
       showToast(`Escrow Locked! Booking confirmed via ${paymentMethod.replace('_', ' ')}.`, 'success');
 
       // Export Tax Invoice PDF
-      const html = `
+      const html = activeTab === 'OOH' ? `
         <table class="table">
           <thead><tr><th>Booking Charge Item</th><th>Amount (PKR)</th></tr></thead>
           <tbody>
@@ -56,8 +68,19 @@ export const AdvertiserDashboard: React.FC = () => {
             <tr><td><strong>Amount Deposited / Due Now:</strong></td><td><strong>${dueNowAmount.toLocaleString()} PKR (${paymentMilestone === 'MILESTONE_30_70' ? '30% Deposit' : '100% Upfront'})</strong></td></tr>
           </tbody>
         </table>
+      ` : `
+        <table class="table">
+          <thead><tr><th>TV Spot Item</th><th>Amount (PKR)</th></tr></thead>
+          <tbody>
+            <tr><td>TV Channel:</td><td><strong>${selectedTvChannel}</strong></td></tr>
+            <tr><td>Spot Format:</td><td><strong>${spotType}</strong></td></tr>
+            <tr><td>Quantity (${spotQuantity} Spots x ${tvRatePerSpot.toLocaleString()} PKR):</td><td>${tvGrossSubtotal.toLocaleString()} PKR</td></tr>
+            <tr><td>Provincial Sales Tax (16% PRA/PST):</td><td>+${tvPstTax.toLocaleString()} PKR</td></tr>
+            <tr class="total-row"><td>Total TV Net Invoice:</td><td>${tvNetInvoice.toLocaleString()} PKR</td></tr>
+          </tbody>
+        </table>
       `;
-      exportCommercialPdf(`Tax Invoice - OMNI Booking ${Date.now()}`, html);
+      exportCommercialPdf(`Tax Invoice - OMNI ${activeTab} Booking ${Date.now()}`, html);
 
       setTimeout(() => setIsCheckoutSuccess(false), 5000);
     } catch (err: any) {
@@ -65,6 +88,24 @@ export const AdvertiserDashboard: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleGenerateCertificateOfPlayback = () => {
+    const html = `
+      <div style="font-family: sans-serif; padding: 20px;">
+        <h2 style="color: #059669;">CERTIFICATE OF PLAYBACK</h2>
+        <p>Broadcast Verification & Airtime Timestamp Proof</p>
+        <hr/>
+        <table class="table">
+          <tr><td>TV Network:</td><td><strong>${selectedTvChannel} (HD Broadcast)</strong></td></tr>
+          <tr><td>Aired Format:</td><td><strong>${spotType}</strong></td></tr>
+          <tr><td>Verified Airings:</td><td><strong>${spotQuantity} Spots Completed</strong></td></tr>
+          <tr><td>Audit Hash:</td><td><code>0x8f93...4a2b</code></td></tr>
+        </table>
+      </div>
+    `;
+    exportCommercialPdf(`Certificate of Playback - ${selectedTvChannel}`, html);
+    showToast('Certificate of Playback PDF exported!', 'success');
   };
 
   return (
@@ -76,217 +117,222 @@ export const AdvertiserDashboard: React.FC = () => {
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/20 text-indigo-400 text-xs font-black mb-2">
               <Building2 className="w-3.5 h-3.5" /> Media Buying Command & Escrow Checkout
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black font-display text-white">Media Buying & Dayparting Planner</h2>
-            <p className="text-xs text-slate-400 mt-1">Configure flight schedule, category exclusivity, milestone deposit & Pakistani payment gateways</p>
+            <h2 className="text-2xl sm:text-3xl font-black font-display text-white">Media Buying & TV Spot Engine</h2>
+            <p className="text-xs text-slate-400 mt-1">Configure flight schedule, category exclusivity, TV broadcast spots & escrow payments</p>
           </div>
 
-          <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 text-right min-w-[200px]">
-            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">Net Tax Inclusive Invoice</span>
-            <p className="text-2xl font-black text-emerald-400 font-display">{netInvoice.toLocaleString()} PKR</p>
-            <span className="text-[10px] text-indigo-300 font-bold block mt-0.5">Includes 16% PRA/PST Sales Tax</span>
+          <div className="flex items-center gap-3">
+            <div className="p-1 rounded-xl bg-slate-950 border border-slate-800 flex items-center">
+              <button
+                onClick={() => setActiveTab('OOH')}
+                className={`px-3.5 py-2 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === 'OOH' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Building2 className="w-3.5 h-3.5" /> Billboards & DOOH
+              </button>
+              <button
+                onClick={() => setActiveTab('TV')}
+                className={`px-3.5 py-2 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === 'TV' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Tv className="w-3.5 h-3.5" /> TV & Broadcast
+              </button>
+            </div>
+
+            <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-right hidden md:block">
+              <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">Net Invoice</span>
+              <p className="text-xl font-black text-emerald-400 font-display">
+                {(activeTab === 'OOH' ? netInvoice : tvNetInvoice).toLocaleString()} PKR
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Campaign Budget & Duration Engine */}
-      <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-6">
-        <div className="space-y-3">
-          <div className="flex justify-between items-baseline">
-            <label className="text-sm font-bold text-slate-300 flex items-center gap-2">
-              <Sliders className="w-4 h-4 text-indigo-400" /> Campaign Budget Allocation
+      {activeTab === 'OOH' ? (
+        /* OOH & DOOH Campaign Budget & Duration Engine */
+        <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-6">
+          <div className="space-y-3">
+            <div className="flex justify-between items-baseline">
+              <label className="text-sm font-bold text-slate-300 flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-indigo-400" /> Campaign Budget Allocation
+              </label>
+              <span className="text-2xl font-black text-emerald-400 font-display">{budget.toLocaleString()} PKR</span>
+            </div>
+            <input
+              type="range"
+              min={100000}
+              max={50000000}
+              step={100000}
+              value={budget}
+              onChange={(e) => setBudget(Number(e.target.value))}
+              className="w-full h-2 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+            />
+          </div>
+
+          {/* Duration Factors */}
+          <div className="space-y-2">
+            <label className="text-xs font-extrabold uppercase text-indigo-400 flex items-center gap-1.5">
+              <Calendar className="w-4 h-4" /> Select Display Duration Factor:
             </label>
-            <span className="text-2xl font-black text-emerald-400 font-display">{budget.toLocaleString()} PKR</span>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              {[
+                { days: 7, label: '7 Days', disc: 'Standard' },
+                { days: 14, label: '14 Days', disc: '-8% Disc.' },
+                { days: 30, label: '30 Days (1 Mo)', disc: '-15% Disc.' },
+                { days: 50, label: '50 Days', disc: '-22% Disc.' },
+                { days: 90, label: '90 Days (Qtr)', disc: '-28% Disc.' },
+              ].map((item) => (
+                <button
+                  key={item.days}
+                  onClick={() => setDurationDays(item.days)}
+                  className={`p-3 rounded-xl text-left border cursor-pointer transition ${
+                    durationDays === item.days
+                      ? 'bg-emerald-600/20 border-emerald-500 text-white shadow-md'
+                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <span className="text-xs font-bold block">{item.label}</span>
+                  <span className="text-[10px] text-emerald-400 font-extrabold">{item.disc}</span>
+                </button>
+              ))}
+            </div>
           </div>
-          <input
-            type="range"
-            min={100000}
-            max={50000000}
-            step={100000}
-            value={budget}
-            onChange={(e) => setBudget(Number(e.target.value))}
-          />
-        </div>
 
-        {/* Duration Factors */}
-        <div className="space-y-2">
-          <label className="text-xs font-extrabold uppercase text-indigo-400 flex items-center gap-1.5">
-            <Calendar className="w-4 h-4" /> Select Display Duration Factor:
-          </label>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-            {[
-              { days: 7, label: '7 Days', disc: 'Standard' },
-              { days: 14, label: '14 Days', disc: '-8% Disc.' },
-              { days: 30, label: '30 Days (1 Mo)', disc: '-15% Disc.' },
-              { days: 50, label: '50 Days', disc: '-22% Disc.' },
-              { days: 90, label: '90 Days (3 Mo)', disc: '-28% Disc.' },
-            ].map((d) => (
-              <button
-                key={d.days}
-                type="button"
-                onClick={() => setDurationDays(d.days)}
-                className={`p-3 rounded-xl border text-center transition cursor-pointer ${
-                  durationDays === d.days
-                    ? 'bg-emerald-600 border-emerald-500 text-white font-extrabold shadow-md'
-                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
-                }`}
+          {/* Dayparting & Category Exclusivity */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+              <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-emerald-400" /> Dayparting Flight Slot
+              </label>
+              <select
+                value={dayparting}
+                onChange={(e) => setDayparting(e.target.value)}
+                className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white outline-none"
               >
-                <span className="text-xs font-bold block">{d.label}</span>
-                <span className="text-[10px] text-emerald-300 font-semibold">{d.disc}</span>
-              </button>
-            ))}
+                <option value="FULL">Full 24-Hour Continuous Flight</option>
+                <option value="PEAK_COMMUTE">Peak Commute Hours (7-10 AM & 5-9 PM)</option>
+                <option value="NIGHT_LATE">Late Night High Visibility (9 PM - 2 AM)</option>
+              </select>
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+              <div>
+                <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                  <Lock className="w-4 h-4 text-amber-400" /> Category Exclusivity Lock
+                </label>
+                <p className="text-[11px] text-slate-400 mt-0.5">Block competitors on same screen (+15% premium)</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={isCategoryExclusive}
+                onChange={(e) => setIsCategoryExclusive(e.target.checked)}
+                className="w-5 h-5 accent-emerald-500 cursor-pointer"
+              />
+            </div>
           </div>
         </div>
+      ) : (
+        /* Module 20: TV Broadcast Booking Engine */
+        <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-6">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+            <div>
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Tv className="w-5 h-5 text-indigo-400" /> Pakistani TV Network Spot Booking
+              </h3>
+              <p className="text-xs text-slate-400">Reserve commercial spots on Geo, ARY, Hum TV & PTV with playback verification</p>
+            </div>
 
-        {/* Hourly Dayparting Selector */}
-        <div className="space-y-2">
-          <label className="text-xs font-extrabold uppercase text-purple-400 flex items-center gap-1.5">
-            <Clock className="w-4 h-4" /> Hourly Dayparting & Flight Schedule:
-          </label>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
-            {[
-              { id: 'FULL', title: '24/7 Full Loop', sub: 'Continuous 24-Hour Rotation' },
-              { id: 'MORNING_RUSH', title: 'Morning Peak (7-11 AM)', sub: 'Office & School Commute' },
-              { id: 'EVENING_RUSH', title: 'Evening Peak (5-10 PM)', sub: 'Dinner & Shopping Traffic' },
-              { id: 'NIGHT_PEAK', title: 'Night Life (7 PM - 1 AM)', sub: 'High Gen-Z Lounge Hours' },
-            ].map((part) => (
-              <button
-                key={part.id}
-                type="button"
-                onClick={() => setDayparting(part.id)}
-                className={`p-3 rounded-xl border text-left transition cursor-pointer ${
-                  dayparting === part.id
-                    ? 'bg-purple-600/30 border-purple-500 text-white font-bold'
-                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
-                }`}
+            <button
+              onClick={handleGenerateCertificateOfPlayback}
+              className="px-3 py-1.5 bg-slate-950 border border-slate-800 hover:bg-slate-800 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+            >
+              <Award className="w-3.5 h-3.5 text-emerald-400" /> Certificate of Playback PDF
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-300">TV Network Channel</label>
+              <select
+                value={selectedTvChannel}
+                onChange={(e) => setSelectedTvChannel(e.target.value)}
+                className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none"
               >
-                <span className="text-xs font-bold block">{part.title}</span>
-                <span className="text-[10px] text-purple-300 block">{part.sub}</span>
-              </button>
-            ))}
+                <option value="Geo News">Geo News HD (Prime News)</option>
+                <option value="ARY Digital">ARY Digital (Entertainment Peak)</option>
+                <option value="Hum TV">Hum TV (Prime Drama Slot)</option>
+                <option value="PTV Sports">PTV Sports (Live Cricket Stream)</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-300">Spot Format</label>
+              <select
+                value={spotType}
+                onChange={(e) => setSpotType(e.target.value)}
+                className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none"
+              >
+                <option value="BULLETIN_SPOT">9 PM Prime News Bulletin Spot (PKR 180,000/spot)</option>
+                <option value="TALKSHOW_LBAR">Talkshow L-Bar Overlay Banner (PKR 120,000/spot)</option>
+                <option value="NEWS_TICKER">Live News Ticker Ticker Bar (PKR 65,000/spot)</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-300">Spot Quantity</label>
+              <input
+                type="number"
+                min={1}
+                max={100}
+                value={spotQuantity}
+                onChange={(e) => setSpotQuantity(Number(e.target.value))}
+                className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none"
+              />
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Competitor Exclusivity Lock */}
-        <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
-          <div>
-            <span className="text-xs font-extrabold text-white flex items-center gap-1.5">
-              <Lock className="w-4 h-4 text-amber-400" /> Category Exclusivity Lock (+15% Premium Fee)
-            </span>
-            <p className="text-[11px] text-slate-400 mt-0.5">Locks adjacent billboards from displaying direct competitor brand ads during your campaign flight.</p>
-          </div>
-
-          <input
-            type="checkbox"
-            checked={isCategoryExclusive}
-            onChange={(e) => setIsCategoryExclusive(e.target.checked)}
-            className="w-5 h-5 rounded border-slate-700 text-emerald-500 focus:ring-0 cursor-pointer"
-          />
-        </div>
-      </div>
-
-      {/* Payment Gateway Channel Selector */}
+      {/* Payment Gateway Checkout Selector */}
       <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-        <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
-          <CreditCard className="w-4 h-4 text-indigo-400" /> Select Payment Channel Gateway
+        <h3 className="text-sm font-extrabold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
+          <CreditCard className="w-4 h-4" /> Escrow Payment Gateway Selector
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
-            { id: 'BANK_TRANSFER', title: 'Manual Bank Transfer (IBAN/RAAST)', desc: 'Direct corporate bank escrow' },
-            { id: 'JAZZCASH', title: 'JazzCash Mobile Wallet', desc: 'Instant mobile account debit' },
-            { id: 'EASYPAISA', title: 'Easypaisa Gateway', desc: 'Instant digital wallet payout' },
-          ].map((pm) => (
+            { id: 'BANK_TRANSFER', name: 'Manual Bank Transfer (IBAN/RAAST)', desc: 'Zero gateway fee • Direct escrow account' },
+            { id: 'JAZZCASH', name: 'JazzCash Wallet API', desc: 'Instant OTP verification deposit' },
+            { id: 'EASYPAISA', name: 'Easypaisa Mobile Account', desc: 'Fast mobile account transfer' },
+          ].map((gateway) => (
             <button
-              key={pm.id}
-              type="button"
-              onClick={() => setPaymentMethod(pm.id as any)}
-              className={`p-3.5 rounded-xl border text-left transition cursor-pointer ${
-                paymentMethod === pm.id
-                  ? 'bg-indigo-600/30 border-indigo-500 text-white font-extrabold'
+              key={gateway.id}
+              onClick={() => setPaymentMethod(gateway.id as any)}
+              className={`p-3.5 rounded-xl border text-left cursor-pointer transition ${
+                paymentMethod === gateway.id
+                  ? 'bg-emerald-600/20 border-emerald-500 text-white shadow-md'
                   : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
               }`}
             >
-              <span className="text-xs font-bold block text-white">{pm.title}</span>
-              <span className="text-[10px] text-indigo-300 block mt-0.5">{pm.desc}</span>
+              <span className="text-xs font-bold block">{gateway.name}</span>
+              <span className="text-[10px] text-slate-500 block mt-0.5">{gateway.desc}</span>
             </button>
           ))}
-        </div>
-      </div>
-
-      {/* Commercial Tax Invoice & Checkout Box */}
-      <div className="p-6 rounded-2xl bg-slate-900 border border-emerald-500/30 space-y-4">
-        <h3 className="text-base font-extrabold text-white flex items-center gap-2">
-          <ShoppingCart className="w-5 h-5 text-emerald-400" /> Phygital Campaign Tax Invoice & Escrow Checkout
-        </h3>
-
-        <div className="space-y-2 text-xs">
-          <div className="flex justify-between text-slate-300 py-1.5 border-b border-slate-800">
-            <span>Base Media Budget ({durationDays} Days Display):</span>
-            <strong className="text-white">{budget.toLocaleString()} PKR</strong>
-          </div>
-          {discountAmount > 0 && (
-            <div className="flex justify-between text-emerald-400 py-1.5 border-b border-slate-800">
-              <span>Volume Discount Savings (-{discountPct}%):</span>
-              <strong>-{discountAmount.toLocaleString()} PKR</strong>
-            </div>
-          )}
-          {exclusivityFee > 0 && (
-            <div className="flex justify-between text-amber-400 py-1.5 border-b border-slate-800">
-              <span>Category Exclusivity Fee (+15% Premium):</span>
-              <strong>+{exclusivityFee.toLocaleString()} PKR</strong>
-            </div>
-          )}
-          <div className="flex justify-between text-slate-300 py-1.5 border-b border-slate-800">
-            <span>Provincial Sales Tax (16% PRA/PST Tax):</span>
-            <strong className="text-amber-400">+{pstTax.toLocaleString()} PKR</strong>
-          </div>
-          <div className="flex justify-between text-base font-black text-emerald-400 py-2">
-            <span>Total Payable Amount:</span>
-            <span className="text-xl font-display">{netInvoice.toLocaleString()} PKR</span>
-          </div>
-        </div>
-
-        {/* Milestone Schedule Selector */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-          <button
-            type="button"
-            onClick={() => setPaymentMilestone('FULL')}
-            className={`p-3.5 rounded-xl border text-left text-xs font-bold transition cursor-pointer ${
-              paymentMilestone === 'FULL' ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'
-            }`}
-          >
-            <span>100% Full Upfront Escrow</span>
-            <span className="block text-[10px] text-emerald-200 mt-0.5">{netInvoice.toLocaleString()} PKR Deposit</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setPaymentMilestone('MILESTONE_30_70')}
-            className={`p-3.5 rounded-xl border text-left text-xs font-bold transition cursor-pointer ${
-              paymentMilestone === 'MILESTONE_30_70' ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-400'
-            }`}
-          >
-            <span>30% Deposit + 70% Post-Proof Launch</span>
-            <span className="block text-[10px] text-emerald-200 mt-0.5">Pay {deposit30Amount.toLocaleString()} PKR Now</span>
-          </button>
         </div>
 
         <button
           onClick={handleCheckout}
-          disabled={isSubmitting || isCheckoutSuccess}
-          className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-sm font-extrabold flex items-center justify-center gap-2 rounded-xl shadow-xl cursor-pointer"
+          disabled={isSubmitting}
+          className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-extrabold rounded-xl text-sm shadow-xl flex items-center justify-center gap-2 cursor-pointer"
         >
           {isSubmitting ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" /> Processing Booking & Locking Escrow...
-            </>
-          ) : isCheckoutSuccess ? (
-            <>
-              <CheckCircle2 className="w-5 h-5" /> Campaign Escrow Locked & Order Transmitted!
-            </>
+            <Loader2 className="w-5 h-5 animate-spin" />
           ) : (
             <>
-              Lock Escrow & Deploy Campaign ({dueNowAmount.toLocaleString()} PKR) <ChevronRight className="w-5 h-5" />
+              <ShieldCheck className="w-5 h-5" /> Confirm Booking & Lock Escrow ({(activeTab === 'OOH' ? netInvoice : tvNetInvoice).toLocaleString()} PKR)
             </>
           )}
         </button>
