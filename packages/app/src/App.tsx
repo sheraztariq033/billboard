@@ -21,7 +21,7 @@ const PageLoader = () => (
   <div className="flex-1 flex items-center justify-center min-h-[60vh]">
     <div className="flex flex-col items-center gap-3">
       <div className="w-10 h-10 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
-      <p className="text-sm text-slate-500 font-medium">Loading…</p>
+      <p className="text-sm text-slate-400 font-medium">Loading…</p>
     </div>
   </div>
 );
@@ -47,7 +47,7 @@ const GuestOnly: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 const AppLayout: React.FC = () => (
-  <div className="min-h-dvh flex flex-col lg:flex-row bg-slate-950 text-slate-100">
+  <div className="min-h-dvh flex flex-col lg:flex-row bg-slate-950 text-slate-100 font-sans transition-colors duration-300">
     <OfflineBanner />
     <Navigation />
 

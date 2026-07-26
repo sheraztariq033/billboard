@@ -20,10 +20,10 @@
 
 /* ─── Light Mode Token Overrides ─── */
 html.light {
-  --color-og-bg: #f4f6f8;
+  --color-og-bg: #f8fafc;
   --color-og-surface: #ffffff;
-  --color-og-surface-2: #eef2f6;
-  --color-og-border: rgba(0, 0, 0, 0.08);
+  --color-og-surface-2: #f1f5f9;
+  --color-og-border: #e2e8f0;
   --color-og-border-hover: rgba(16, 185, 129, 0.4);
 }
 
@@ -48,6 +48,7 @@ body {
 
 html.light body {
   color: #0f172a;
+  background-color: #f8fafc;
 }
 
 #root {
@@ -62,10 +63,10 @@ html.light body {
   letter-spacing: -0.03em;
 }
 
-/* ─── Emerald CTA Button Style (Reference App Match) ─── */
+/* ─── Emerald CTA Button Style ─── */
 .btn-emerald {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: #ffffff;
+  color: #ffffff !important;
   font-weight: 800;
   border-radius: 0.875rem;
   box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.35);
@@ -78,26 +79,81 @@ html.light body {
   transform: translateY(-1px);
 }
 
-/* ─── Glassmorphism Utilities ─── */
-.glass-panel {
-  background: rgba(14, 20, 36, 0.75);
-  backdrop-filter: blur(24px) saturate(190%);
-  -webkit-backdrop-filter: blur(24px) saturate(190%);
-  border: 1px solid var(--color-og-border);
-  border-radius: 1.25rem;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.3s ease;
+/* ─── Light / Dark Theme Utility Classes for High Visibility ─── */
+
+/* Card Containers */
+html.light .bg-slate-900,
+html.light .bg-slate-950,
+html.light .bg-og-bg {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
 }
 
+html.light .bg-slate-950\/85,
+html.light .bg-black\/85,
+html.light .bg-black\/90 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  color: #0f172a !important;
+}
+
+html.light .bg-slate-950\/60,
+html.light .bg-slate-900\/50,
+html.light .bg-slate-900\/90,
+html.light .bg-og-bg\/80,
+html.light .bg-og-bg\/90 {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* Text Colors */
+html.light .text-white {
+  color: #0f172a !important;
+}
+
+html.light .text-slate-100,
+html.light .text-slate-200,
+html.light .text-slate-300 {
+  color: #334155 !important;
+}
+
+html.light .text-slate-400,
+html.light .text-slate-500 {
+  color: #64748b !important;
+}
+
+/* Form Inputs & Selects */
+html.light input[type="text"],
+html.light input[type="number"],
+html.light input[type="email"],
+html.light input[type="password"],
+html.light select,
+html.light textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Modal Content Containers */
 html.light .glass-panel {
-  background: rgba(255, 255, 255, 0.90);
-  border-color: rgba(0, 0, 0, 0.08);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08) !important;
 }
 
-.glass-panel:hover {
-  border-color: rgba(16, 185, 129, 0.35);
-  box-shadow: 0 15px 35px -10px rgba(16, 185, 129, 0.15);
+/* Borders */
+html.light .border-slate-800,
+html.light .border-slate-700,
+html.light .border-white\/\[0\.08\],
+html.light .border-white\/\[0\.06\],
+html.light .border-white\/\[0\.10\] {
+  border-color: #e2e8f0 !important;
 }
 
 /* ─── Gradient Text ─── */
