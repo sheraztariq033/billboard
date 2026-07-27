@@ -5,6 +5,8 @@ import { useToast } from '../context/ToastContext';
 import { exportCommercialPdf } from '../utils/exportPdf';
 import { TrafficHeatmapOverlay } from '../components/TrafficHeatmapOverlay';
 import { ContractPdfGenerator } from '../components/ContractPdfGenerator';
+import { AudienceDemographicsCard } from '../components/AudienceDemographicsCard';
+import { EscrowLedgerTable } from '../components/EscrowLedgerTable';
 
 interface AnalyticsData {
   grossImpressions: number;
@@ -90,6 +92,12 @@ export const AnalyticsAdminEnterprise: React.FC = () => {
       {/* Automated Contract PDF Generator Component */}
       <ContractPdfGenerator />
 
+      {/* Audience Demographics & Escrow Ledger Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <AudienceDemographicsCard />
+        <EscrowLedgerTable />
+      </div>
+
       {/* Metrics Cards */}
       {isLoading ? (
         <div className="py-12 flex justify-center">
@@ -153,7 +161,7 @@ export const AnalyticsAdminEnterprise: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-slate-800 text-slate-400">
+              <tr className="border-b border-slate-800 text-slate-400 font-bold">
                 <th className="py-3 px-4">CITY</th>
                 <th className="py-3 px-4">ACTIVE DISPLAYS</th>
                 <th className="py-3 px-4">MONTHLY IMPRESSIONS</th>
