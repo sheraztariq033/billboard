@@ -24,13 +24,18 @@ interface InventoryItem {
   ratingStars?: number;
 }
 
-// Default coordinates for Pakistan cities
+// Default coordinates for major Pakistan cities
 const CITY_COORDS: Record<string, [number, number]> = {
   Lahore: [31.5204, 74.3587],
   Karachi: [24.8607, 67.0011],
   Islamabad: [33.6844, 73.0479],
+  Rawalpindi: [33.5973, 73.0479],
+  Faisalabad: [31.4504, 73.1350],
   Peshawar: [34.0151, 71.5249],
   Multan: [30.1575, 71.5249],
+  Quetta: [30.1798, 66.9750],
+  Sialkot: [32.4945, 74.5229],
+  Gwadar: [25.1216, 62.3254],
 };
 
 export const AssetInventoryMap: React.FC = () => {
@@ -139,120 +144,128 @@ export const AssetInventoryMap: React.FC = () => {
   }, [viewMode, filteredInventory, selectedCity]);
 
   const toggleWishlist = (id: string) => {
-    if (wishlist.includes(id)) {
-      setWishlist(wishlist.filter((wId) => wId !== id));
-      showToast('Removed from wishlist collection', 'info');
-    } else {
-      setWishlist([...wishlist, id]);
-      showToast('Saved to wishlist collection!', 'success');
-    }
+    setWishlist((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+    showToast('Inventory wishlist updated', 'success');
   };
 
   const toggleCompare = (item: InventoryItem) => {
-    if (compareItems.some((c) => c.id === item.id)) {
-      setCompareItems(compareItems.filter((c) => c.id !== item.id));
-    } else {
-      if (compareItems.length >= 3) {
-        showToast('You can compare maximum 3 billboards at once', 'error');
-        return;
+    setCompareItems((prev) => {
+      const exists = prev.some((i) => i.id === item.id);
+      if (exists) {
+        return prev.filter((i) => i.id !== item.id);
       }
-      setCompareItems([...compareItems, item]);
-      showToast(`Added ${item.title} to comparison`, 'success');
-    }
+      if (prev.length >= 3) {
+        showToast('You can compare a maximum of 3 items side-by-side', 'error');
+        return prev;
+      }
+      return [...prev, item];
+    });
   };
 
   return (
-    <div className="space-y-6 animate-fade-in pb-12">
-      {/* Search Header */}
-      <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/20 text-emerald-400 text-xs font-black mb-2">
-              <MapPin className="w-3.5 h-3.5" /> Pakistan Omnichannel Inventory Map
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-black font-display text-white">Explore Billboards & DOOH SMDs</h2>
-          </div>
-
+    <div className="space-y-6">
+      {/* Header Controls */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
           <div className="flex items-center gap-2">
-            {compareItems.length > 0 && (
-              <button
-                onClick={() => setShowCompareModal(true)}
-                className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-extrabold rounded-xl shadow-md text-xs flex items-center gap-1.5 cursor-pointer animate-pulse"
-              >
-                <SlidersHorizontal className="w-4 h-4" /> Compare ({compareItems.length})
-              </button>
-            )}
-
-            <div className="p-1 rounded-xl bg-slate-950 border border-slate-800 flex items-center">
-              <button
-                onClick={() => setViewMode('GRID')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                  viewMode === 'GRID' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <Grid className="w-3.5 h-3.5" /> Grid View
-              </button>
-              <button
-                onClick={() => setViewMode('MAP')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                  viewMode === 'MAP' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <MapIcon className="w-3.5 h-3.5" /> GIS Map
-              </button>
-            </div>
+            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              NATIONAL OOH & DOOH INVENTORY DIRECTORY
+            </span>
           </div>
+          <h1 className="text-2xl font-black text-white tracking-tight mt-1">
+            Pakistan Omnichannel Billboard Directory
+          </h1>
+          <p className="text-xs text-slate-400 mt-1">
+            Discover premium digital SMDs, unipoles, transit wraps, and karayna ambient media spots across Pakistan.
+          </p>
         </div>
 
-        {/* Filter Controls */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="relative">
-            <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
-            <input
-              type="text"
-              placeholder="Search Gulberg, Clifton, DOOH..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-emerald-500"
-            />
+        <div className="flex items-center gap-3">
+          {compareItems.length > 0 && (
+            <button
+              onClick={() => setShowCompareModal(true)}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 text-slate-950 shadow-md shadow-amber-500/10 hover:brightness-110 transition cursor-pointer"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" /> Compare ({compareItems.length})
+            </button>
+          )}
+
+          <div className="flex bg-slate-900 border border-slate-800 p-1 rounded-xl">
+            <button
+              onClick={() => setViewMode('GRID')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                viewMode === 'GRID' ? 'bg-slate-950 text-white border border-slate-800' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Grid className="w-3.5 h-3.5" /> Grid View
+            </button>
+            <button
+              onClick={() => setViewMode('MAP')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                viewMode === 'MAP' ? 'bg-slate-950 text-white border border-slate-800' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <MapIcon className="w-3.5 h-3.5" /> GIS Map
+            </button>
           </div>
-
-          <select
-            value={selectedCity}
-            onChange={(e) => setSelectedCity(e.target.value)}
-            className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none"
-          >
-            <option value="ALL">All Cities in Pakistan</option>
-            <option value="LAHORE">Lahore</option>
-            <option value="KARACHI">Karachi</option>
-            <option value="ISLAMABAD">Islamabad</option>
-            <option value="PESHAWAR">Peshawar</option>
-            <option value="MULTAN">Multan</option>
-          </select>
-
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none"
-          >
-            <option value="ALL">All Media Categories</option>
-            <option value="DOOH">Digital SMDs (DOOH)</option>
-            <option value="OOH">Static Billboards (OOH)</option>
-            <option value="RETAIL_SHELF">Retail Store Shelves</option>
-            <option value="TRANSIT">Bus & Vehicle Wraps</option>
-          </select>
-
-          <select
-            value={minTraffic}
-            onChange={(e) => setMinTraffic(Number(e.target.value))}
-            className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none"
-          >
-            <option value={0}>Any Traffic Level</option>
-            <option value={500000}>500,000+ Daily Imp.</option>
-            <option value={1000000}>1,000,000+ Daily Imp.</option>
-            <option value={2000000}>2,000,000+ Daily Imp.</option>
-          </select>
         </div>
+      </div>
+
+      {/* Filter Controls */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="relative">
+          <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5" />
+          <input
+            type="text"
+            placeholder="Search Area, Format, or Keywords..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-emerald-500"
+          />
+        </div>
+
+        <select
+          value={selectedCity}
+          onChange={(e) => setSelectedCity(e.target.value)}
+          className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none"
+        >
+          <option value="ALL">All Cities in Pakistan</option>
+          <option value="LAHORE">Lahore</option>
+          <option value="KARACHI">Karachi</option>
+          <option value="ISLAMABAD">Islamabad</option>
+          <option value="RAWALPINDI">Rawalpindi</option>
+          <option value="FAISALABAD">Faisalabad</option>
+          <option value="PESHAWAR">Peshawar</option>
+          <option value="MULTAN">Multan</option>
+          <option value="QUETTA">Quetta</option>
+          <option value="SIALKOT">Sialkot</option>
+          <option value="GWADAR">Gwadar</option>
+        </select>
+
+        <select
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none"
+        >
+          <option value="ALL">All Media Formats</option>
+          <option value="DOOH">Digital SMDs (DOOH)</option>
+          <option value="OOH">Static Billboards (OOH)</option>
+          <option value="TRANSIT">Transit wraps (Rickshaws/Buses)</option>
+          <option value="AMBIENT">Retail Ambient Media</option>
+        </select>
+
+        <select
+          value={minTraffic}
+          onChange={(e) => setMinTraffic(Number(e.target.value))}
+          className="w-full p-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none"
+        >
+          <option value={0}>Any Traffic Level</option>
+          <option value={100000}>100,000+ Daily Reach</option>
+          <option value={500000}>500,000+ Daily Reach</option>
+          <option value={1000000}>1,000,000+ Daily Reach</option>
+        </select>
       </div>
 
       {/* Main Content: Map or Grid */}
@@ -275,7 +288,7 @@ export const AssetInventoryMap: React.FC = () => {
               <div key={item.id} className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col justify-between gap-3 space-y-2 hover:border-emerald-500/40 transition">
                 <div className="space-y-3">
                   <div className="relative aspect-video rounded-xl overflow-hidden bg-slate-950">
-                    <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                    <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover animate-fade-in" />
                     <div className="absolute top-3 left-3 flex gap-2">
                       <span className="px-2.5 py-1 bg-black/70 backdrop-blur-md text-emerald-400 text-[10px] font-black rounded-lg border border-emerald-500/30">
                         {item.category}
