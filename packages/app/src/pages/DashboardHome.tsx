@@ -6,6 +6,8 @@ import { useToast } from '../context/ToastContext';
 import { exportCommercialPdf } from '../utils/exportPdf';
 import { AiSloganGenerator } from '../components/AiSloganGenerator';
 import { CurrencyConverterWidget } from '../components/CurrencyConverterWidget';
+import { AiHelpChatWidget } from '../components/AiHelpChatWidget';
+import { SystemActivityStream } from '../components/SystemActivityStream';
 
 export const DashboardHome: React.FC = () => {
   const { user } = useAuth();
@@ -48,23 +50,6 @@ export const DashboardHome: React.FC = () => {
   };
 
   const handleExportForm164Cert = () => {
-    const html = `
-      <div style="font-family: sans-serif; padding: 20px;">
-        <h2 style="color: #059669;">FBR FORM 164 WITHHOLDING TAX CERTIFICATE</h2>
-        <p>Federal Board of Revenue • Section 153 Income Tax Deduction Proof</p>
-        <hr/>
-        <table class="table">
-          <tr><td>Taxpayer / Business Title:</td><td><strong>${user?.name || 'OMNI-GRID Client'}</strong></td></tr>
-          <tr><td>FBR NTN Number:</td><td><strong>7912405-9</strong></td></tr>
-          <tr><td>Gross Campaign Value:</td><td><strong>${taxGross.toLocaleString()} PKR</strong></td></tr>
-          <tr><td>PST / Sales Tax (16% PRA):</td><td><strong>+${pstTaxPkr.toLocaleString()} PKR</strong></td></tr>
-          <tr><td>Withholding Tax Rate:</td><td><strong>${whtPct}% (${userType})</strong></td></tr>
-          <tr><td>WHT Deducted (FBR Sec 153):</td><td><strong>-${whtTaxPkr.toLocaleString()} PKR</strong></td></tr>
-          <tr><td>Net Payable to Escrow:</td><td><strong>${netPayablePkr.toLocaleString()} PKR</strong></td></tr>
-        </table>
-      </div>
-    `;
-
     exportCommercialPdf({
       title: 'FBR Form 164 Withholding Tax Certificate',
       campaignName: 'DOOH Network Placement Services',
@@ -117,6 +102,12 @@ export const DashboardHome: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <AiSloganGenerator />
         <CurrencyConverterWidget />
+      </div>
+
+      {/* Interactive Chat & Event Stream Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <AiHelpChatWidget />
+        <SystemActivityStream />
       </div>
 
       {/* AI Campaign Co-Pilot Panel */}
