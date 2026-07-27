@@ -415,12 +415,31 @@ export const AssetInventoryMap: React.FC = () => {
 
       {/* Asset Detail Modal */}
       {inspectingAsset && (
-        <AssetDetailModal asset={inspectingAsset} onClose={() => setInspectingAsset(null)} />
+        <AssetDetailModal
+          isOpen={true}
+          asset={{
+            id: inspectingAsset.id,
+            title: inspectingAsset.title,
+            city: inspectingAsset.locationCity,
+            area: inspectingAsset.locationArea,
+            category: inspectingAsset.category,
+            monthlyRatePkr: inspectingAsset.monthlyRatePkr,
+            dailyRatePkr: inspectingAsset.dailyRatePkr,
+            impressions: inspectingAsset.estimatedDailyImpressions.toLocaleString(),
+            softExpiry: inspectingAsset.softExpiryDate || 'Late Aug 2026',
+            imageUrl: inspectingAsset.imageUrl,
+          }}
+          onClose={() => setInspectingAsset(null)}
+        />
       )}
 
       {/* 3D Visualizer Modal */}
       {simulatingTitle && (
-        <Billboard3DSimulatorModal title={simulatingTitle} onClose={() => setSimulatingTitle(null)} />
+        <Billboard3DSimulatorModal
+          isOpen={true}
+          assetTitle={simulatingTitle}
+          onClose={() => setSimulatingTitle(null)}
+        />
       )}
     </div>
   );
