@@ -4,6 +4,8 @@ import { api } from '../lib/api';
 import { LayoutDashboard, MapPin, ShoppingCart, BarChart2, Users, Loader2, CheckCircle2, XCircle, Sparkles, Send, Zap, CloudRain, Sun, ShieldAlert, FileText, Calculator } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { exportCommercialPdf } from '../utils/exportPdf';
+import { AiSloganGenerator } from '../components/AiSloganGenerator';
+import { CurrencyConverterWidget } from '../components/CurrencyConverterWidget';
 
 export const DashboardHome: React.FC = () => {
   const { user } = useAuth();
@@ -58,65 +60,95 @@ export const DashboardHome: React.FC = () => {
           <tr><td>PST / Sales Tax (16% PRA):</td><td><strong>+${pstTaxPkr.toLocaleString()} PKR</strong></td></tr>
           <tr><td>Withholding Tax Rate:</td><td><strong>${whtPct}% (${userType})</strong></td></tr>
           <tr><td>WHT Deducted (FBR Sec 153):</td><td><strong>-${whtTaxPkr.toLocaleString()} PKR</strong></td></tr>
-          <tr class="total-row"><td>Net Remitted Payment:</td><td><strong>${netPayablePkr.toLocaleString()} PKR</strong></td></tr>
+          <tr><td>Net Payable to Escrow:</td><td><strong>${netPayablePkr.toLocaleString()} PKR</strong></td></tr>
         </table>
       </div>
     `;
-    exportCommercialPdf(`FBR Form 164 WHT Cert - ${taxGross}`, html);
-    showToast('FBR Form 164 Tax Certificate PDF exported!', 'success');
+
+    exportCommercialPdf({
+      title: 'FBR Form 164 Withholding Tax Certificate',
+      campaignName: 'DOOH Network Placement Services',
+      clientName: user?.name || 'OMNI-GRID Valued Client',
+      totalCostPkr: netPayablePkr,
+      breakdown: [
+        { label: 'Gross Placement Billing', value: `${taxGross.toLocaleString()} PKR` },
+        { label: 'Punjab Revenue Authority PST (16%)', value: `+${pstTaxPkr.toLocaleString()} PKR` },
+        { label: 'Federal Board of Revenue WHT Deducted', value: `-${whtTaxPkr.toLocaleString()} PKR (${whtPct}%)` },
+        { label: 'Net Escrow Release Value', value: `${netPayablePkr.toLocaleString()} PKR` },
+      ],
+    });
+
+    showToast('FBR Form 164 Certificate PDF downloaded!', 'success');
   };
 
   return (
-    <div className="space-y-6 animate-fade-in pb-12">
-      {/* Welcome Banner */}
-      <div className="p-6 rounded-2xl bg-gradient-to-br from-emerald-600/20 to-teal-600/10 border border-emerald-500/20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-6">
+      {/* Hero Welcome Row */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            Welcome back, {user?.name || 'User'}
+          <h1 className="text-2xl font-black text-white tracking-tight">
+            Assalam-o-Alaikum, <span className="text-emerald-400">{user?.name || 'Partner'}</span>!
           </h1>
-          <p className="text-slate-400 mt-1 text-xs">
-            Authenticated as <strong className="text-emerald-400">{user?.email}</strong> • Active Role: <strong className="text-white capitalize">{user?.role}</strong>
+          <p className="text-xs text-slate-400 mt-1">
+            Welcome to Pakistan\'s #1 Omnichannel Ad-Tech Marketplace & Real-Time Edge Engine.
           </p>
         </div>
 
-        <div className="px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center gap-2">
-          {apiStatus === 'checking' && <Loader2 className="w-4 h-4 text-slate-400 animate-spin" />}
-          {apiStatus === 'online' && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
-          {apiStatus === 'offline' && <XCircle className="w-4 h-4 text-rose-400" />}
-          <span className="text-xs font-bold text-white uppercase">API Status: {apiStatus}</span>
+        {/* API Status Badge */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-slate-400">Edge Network Status:</span>
+          {apiStatus === 'checking' ? (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-900 text-slate-400">
+              <Loader2 className="w-3 h-3 animate-spin" /> Checking
+            </span>
+          ) : apiStatus === 'online' ? (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Online
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-400" /> Offline Mode
+            </span>
+          )}
         </div>
       </div>
 
-      {/* AI Campaign Co-Pilot Terminal */}
-      <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-base font-bold text-white flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-emerald-400" /> AI Campaign Co-Pilot Terminal
-          </h3>
-          <span className="text-[10px] px-2.5 py-1 rounded bg-emerald-500/15 text-emerald-400 font-extrabold border border-emerald-500/20">
-            Cloudflare Workers AI Engine
-          </span>
+      {/* AI Slogan Generator & Currency Widget Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <AiSloganGenerator />
+        <CurrencyConverterWidget />
+      </div>
+
+      {/* AI Campaign Co-Pilot Panel */}
+      <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4 shadow-xl">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+            <Sparkles className="w-5 h-5 animate-pulse" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-white">AI Campaign Co-Pilot & Weather Trigger Consultation</h3>
+            <p className="text-xs text-slate-400">Generate optimize budget splits and weather-dependent trigger configurations instantly</p>
+          </div>
         </div>
 
         <form onSubmit={handleConsultAi} className="flex gap-2">
           <input
             type="text"
-            placeholder="Ask AI Co-Pilot (e.g. 'Optimize 5M PKR budget for Karachi & Lahore FMCG launch')..."
+            placeholder="e.g. Optimize 3,000,000 PKR campaign budget for Lahore winter clothing brand"
             value={aiPrompt}
             onChange={(e) => setAiPrompt(e.target.value)}
-            className="flex-1 px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-emerald-500"
+            className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"
           />
           <button
             type="submit"
             disabled={isAiConsulting}
-            className="px-5 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-extrabold rounded-xl text-xs flex items-center gap-1.5 shadow-md cursor-pointer shrink-0"
+            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition cursor-pointer"
           >
-            {isAiConsulting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+            {isAiConsulting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
             Consult AI
           </button>
         </form>
 
-        {/* AI Co-Pilot Recommendation Box */}
         {aiResponse && (
           <div className="p-4 rounded-xl bg-slate-950 border border-emerald-500/30 space-y-3 text-xs animate-fade-in">
             <p className="text-slate-300 font-medium">{aiResponse.summaryText}</p>
