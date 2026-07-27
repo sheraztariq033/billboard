@@ -19,6 +19,7 @@ const AdminControlPortal = lazy(() => import('./pages/AdminControlPortal').then(
 const CreativeStudio = lazy(() => import('./pages/CreativeStudio').then(m => ({ default: m.CreativeStudio })));
 const AnalyticsAdminEnterprise = lazy(() => import('./pages/AnalyticsAdminEnterprise').then(m => ({ default: m.AnalyticsAdminEnterprise })));
 const PhygitalCampaignBuilder = lazy(() => import('./pages/PhygitalCampaignBuilder').then(m => ({ default: m.PhygitalCampaignBuilder })));
+const AdTechOperationsSuite = lazy(() => import('./pages/AdTechOperationsSuite').then(m => ({ default: m.AdTechOperationsSuite })));
 
 const PageLoader = () => (
   <div className="flex-1 flex items-center justify-center min-h-[60vh]">
@@ -79,6 +80,7 @@ const App: React.FC = () => (
               <Route path="planner" element={<Suspense fallback={<PageLoader />}><AdvertiserDashboard /></Suspense>} />
               <Route path="phygital" element={<Suspense fallback={<PageLoader />}><PhygitalCampaignBuilder /></Suspense>} />
               <Route path="creatives" element={<Suspense fallback={<PageLoader />}><CreativeStudio /></Suspense>} />
+              <Route path="operations" element={<Suspense fallback={<PageLoader />}><AdTechOperationsSuite /></Suspense>} />
               <Route path="owner" element={<Suspense fallback={<PageLoader />}><VendorDashboard /></Suspense>} />
               <Route path="earner" element={<Suspense fallback={<PageLoader />}><ShopkeeperPwaDashboard /></Suspense>} />
               <Route path="creator" element={<Suspense fallback={<PageLoader />}><CreatorDashboard /></Suspense>} />
